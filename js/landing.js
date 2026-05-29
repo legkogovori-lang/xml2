@@ -81,7 +81,7 @@ async function checkAuth(role = null) {
 
         const user = users[0];
 
-        // Проверка пароля (обычное сравнение)
+        // Проверка пароля
         if (user.password !== password) {
             authError.textContent = 'Неверный логин или пароль';
             passwordInput.value = '';
@@ -89,18 +89,31 @@ async function checkAuth(role = null) {
             return false;
         }
 
-        // Проверка срока действия
+        // ========== ГЛАВНОЕ ИЗМЕНЕНИЕ ==========
+        // Проверяем срок действия
         if (isPasswordExpired(user.expires_at)) {
-            authError.textContent = `Срок действия пароля истёк. Доступ был до ${user.expires_at}`;
-            passwordInput.value = '';
-            passwordInput.focus();
-            return false;
+            // Если срок истёк - переводим в ДЕМО-режим
+            closeAuthModal();
+            const userData = {
+                login: 'demo',
+                role: 'demo',
+                displayName: 'Демо-режим (доступ истёк)',
+                isDemo: true,
+                expiredMessage: `Ваш доступ истёк ${user.expires_at}. Вам доступен ДЕМО-режим с ограничением 5 записей.`
+            };
+            sessionStorage.setItem('etrn_user', JSON.stringify(userData));
+            
+            // Показываем сообщение об истечении срока
+            alert(userData.expiredMessage);
+            
+            window.location.href = 'app.html';
+            return true;
         }
+        // ======================================
 
-        // Авторизация успешна
+        // Авторизация успешна (срок не истёк)
         closeAuthModal();
         
-        // Сохраняем данные пользователя
         const userData = {
             id: user.id,
             login: user.name,
@@ -124,7 +137,7 @@ async function checkAuth(role = null) {
     }
 }
 
-// Функция открытия модального окна авторизации
+// Остальные функции без изменений...
 function openAuthModal() {
     authModal.style.display = 'flex';
     loginInput.value = '';
@@ -133,30 +146,25 @@ function openAuthModal() {
     setTimeout(() => loginInput.focus(), 100);
 }
 
-// Функция закрытия модального окна авторизации
 function closeAuthModal() {
     authModal.style.display = 'none';
     authError.textContent = '';
 }
 
-// Функция открытия модального окна политики безопасности
 function openPrivacyModal() {
     privacyModal.style.display = 'flex';
 }
 
-// Функция закрытия модального окна политики безопасности
 function closePrivacyModalFunc() {
     privacyModal.style.display = 'none';
 }
 
-// Обработчик Enter
 function handleKeyPress(e) {
     if (e.key === 'Enter') {
         checkAuth();
     }
 }
 
-// Бесконечная прокрутка XML
 function setupInfiniteScroll() {
     const xmlContainer = document.getElementById('scrollingXml');
     if (!xmlContainer) return;
@@ -164,7 +172,6 @@ function setupInfiniteScroll() {
     xmlContainer.innerHTML = originalContent + originalContent;
 }
 
-// Анимация карточек
 function setupScrollAnimation() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -178,7 +185,6 @@ function setupScrollAnimation() {
     });
 }
 
-// Пауза прокрутки XML при наведении
 function setupXmlHover() {
     const xmlWrapper = document.querySelector('.preview-xml-wrapper');
     const xmlContent = document.getElementById('scrollingXml');
@@ -220,11 +226,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setupInfiniteScroll();
     setupScrollAnimation();
     setupXmlHover();
-    
     const hero = document.querySelector('.hero');
     if (hero) hero.style.opacity = '1';
     
-    // Эффект ripple для кнопок
     const buttons = document.querySelectorAll('.btn, .cta-button, .footer-btn');
     buttons.forEach(btn => {
         btn.addEventListener('click', (e) => {

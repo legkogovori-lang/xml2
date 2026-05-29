@@ -8,15 +8,51 @@ let compartments = []; // Массив для хранения отсеков
 // Получение текущего пользователя
 let currentUser = null;
 
+// Получение текущего пользователя из sessionStorage
 function loadCurrentUser() {
     const userData = sessionStorage.getItem('etrn_user');
     if (userData) {
         try {
             currentUser = JSON.parse(userData);
             displayUserInfo();
+            
+            // Проверяем в Supabase ТОЛЬКО если это НЕ демо-режим
+            if (!currentUser.isDemo) {
+                verifyUserInSupabase();
+            }
         } catch(e) {
             console.error('Ошибка загрузки пользователя', e);
+            window.location.href = 'index.html';
         }
+    } else {
+        window.location.href = 'index.html';
+    }
+}
+
+// Дополнительная проверка существования пользователя в Supabase (только для НЕ-демо)
+async function verifyUserInSupabase() {
+    if (!currentUser || !supabaseClient || currentUser.isDemo) return;
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('etrnusers')
+            .select('active, expires_at')
+            .eq('name', currentUser.login)
+            .eq('active', true)
+            .single();
+        
+        if (error || !data) {
+            console.warn('Пользователь не найден в Supabase');
+            return;
+        }
+        
+        if (data.expires_at && new Date(data.expires_at) < new Date()) {
+            sessionStorage.removeItem('etrn_user');
+            alert('Срок действия доступа истёк. Пожалуйста, продлите подписку.');
+            window.location.href = 'index.html';
+        }
+    } catch(e) {
+        console.warn('Ошибка проверки в Supabase:', e);
     }
 }
 
@@ -28,7 +64,7 @@ function displayUserInfo() {
     userInfoDiv.innerHTML = `
         <i class="fas fa-user-circle"></i>
         <span>${currentUser.displayName || currentUser.login}</span>
-        ${currentUser.role === 'demo' ? '<span class="demo-badge">ДЕМО</span>' : ''}
+        ${currentUser.role === 'demo' || currentUser.isDemo ? '<span class="demo-badge">ДЕМО</span>' : ''}
         <button class="logout-btn" id="logoutBtn" title="Выйти"><i class="fas fa-sign-out-alt"></i></button>
     `;
     
@@ -51,8 +87,7 @@ function displayUserInfo() {
         });
     }
     
-    // Если демо-режим, показываем лимиты в интерфейсе
-    if (currentUser.role === 'demo') {
+    if (currentUser.role === 'demo' || currentUser.isDemo) {
         showDemoLimits();
     }
 }

@@ -9,17 +9,21 @@ let compartments = []; // Массив для хранения отсеков
 let currentUser = null;
 
 // Получение текущего пользователя из sessionStorage
+// Получение текущего пользователя из sessionStorage
 function loadCurrentUser() {
     const userData = sessionStorage.getItem('etrn_user');
     if (userData) {
         try {
             currentUser = JSON.parse(userData);
-            displayUserInfo();
             
-            // Проверяем в Supabase ТОЛЬКО если это НЕ демо-режим
-            if (!currentUser.isDemo) {
-                verifyUserInSupabase();
+            // Если есть сообщение об истечении срока - показываем
+            if (currentUser.expiredMessage) {
+                setTimeout(() => {
+                    statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${currentUser.expiredMessage}`;
+                }, 500);
             }
+            
+            displayUserInfo();
         } catch(e) {
             console.error('Ошибка загрузки пользователя', e);
             window.location.href = 'index.html';

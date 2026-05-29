@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ЭТРН.ONLINE | Формирователь транспортных накладных</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/landing.css">
+</head>
+<body>
+    <header class="header glass">
+        <div class="logo">
+            <i class="fas fa-file-alt"></i>
+            <span>этрн.<span class="logo-accent">online</span></span>
+            <small>ЭТрН v3.0</small>
+        </div>
+        <button class="cta-button" id="goToAppBtn">
+            <i class="fas fa-arrow-right"></i>
+            Перейти в сервис
+        </button>
+    </header>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <div class="hero animate">
+            <div>
+                <div class="hero-badge">
+                    <i class="fas fa-check-circle"></i> Официальный формат ЭТрН
+                </div>
+                <h1>Генерация <span>XML-файлов</span> для электронной транспортной накладной</h1>
+                <p>Сервис для создания XML-документов титула Т1 в строгом соответствии с требованиями ГИС ЭТрН. Сформированные файлы готовы к загрузке оператору ЭДО для дальнейшей передачи.</p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">Соответствие формату</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">7+</div>
+                        <div class="stat-label">Категорий справочников</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">∞</div>
+                        <div class="stat-label">Отсеков на накладную</div>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image glass">
+                <i class="fas fa-file-code"></i>
+                <div class="preview-xml-wrapper">
+                    <div class="preview-xml" id="scrollingXml">
+                        <div class="xml-line"><span class="xml-tag">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&lt;File</span> <span class="xml-attr">IdFile</span>=<span class="xml-value">"ON_TRNACLGROT_..."</span><span class="xml-tag">&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&nbsp;&nbsp;&lt;Document</span> <span class="xml-attr">KND</span>=<span class="xml-value">"1110339"</span><span class="xml-tag">&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&nbsp;&nbsp;&nbsp;&nbsp;&lt;SvGO&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;SvYLUch</span> <span class="xml-attr">NamOrg</span>=<span class="xml-value">"ООО ФАКТОР-2"</span> <span class="xml-attr">INNYL</span>=<span class="xml-value">"4205099206"</span> <span class="xml-attr">KPP</span>=<span class="xml-value">"772201001"</span><span class="xml-tag">/&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&nbsp;&nbsp;&nbsp;&nbsp;&lt;/SvGO&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&nbsp;&nbsp;&nbsp;&nbsp;&lt;SvGruz&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;OpGruz</span> <span class="xml-attr">NamGruz</span>=<span class="xml-value">"Нефть сырая"</span> <span class="xml-attr">SostGruz</span>=<span class="xml-value">"Без нареканий"</span> <span class="xml-attr">KolMestGr</span>=<span class="xml-value">"1"</span><span class="xml-tag">/&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;PlMasGruz</span> <span class="xml-attr">MasBrutZnach</span>=<span class="xml-value">"12.000"</span><span class="xml-tag">/&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&nbsp;&nbsp;&nbsp;&nbsp;&lt;/SvGruz&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&nbsp;&nbsp;&nbsp;&nbsp;&lt;SvPer&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;SvYLUch</span> <span class="xml-attr">NamOrg</span>=<span class="xml-value">"АО Берег"</span> <span class="xml-attr">INNYL</span>=<span class="xml-value">"8273281242"</span><span class="xml-tag">/&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&nbsp;&nbsp;&nbsp;&nbsp;&lt;/SvPer&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&nbsp;&nbsp;&lt;/Document&gt;</span></div>
+                        <div class="xml-line"><span class="xml-tag">&lt;/File&gt;</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="section-title">
+            <h2>Всё для быстрой и корректной отправки в ЭДО</h2>
+            <p>Инструменты, которые упрощают работу с электронной транспортной накладной</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card glass" data-hover="glow">
+                <div class="feature-icon"><i class="fas fa-database"></i></div>
+                <h3>Встроенная база данных</h3>
+                <p>Храните грузоотправителей, перевозчиков, водителей и транспорт в IndexedDB. Быстрый доступ без потери данных.</p>
+            </div>
+            <div class="feature-card glass" data-hover="glow">
+                <div class="feature-icon"><i class="fas fa-cubes"></i></div>
+                <h3>Поддержка отсеков</h3>
+                <p>Добавляйте неограниченное количество отсеков с разными продуктами, плотностью, температурой и маркировкой.</p>
+            </div>
+            <div class="feature-card glass" data-hover="glow">
+                <div class="feature-icon"><i class="fas fa-search"></i></div>
+                <h3>Умный поиск</h3>
+                <p>Автодополнение при вводе — выбирайте контрагентов из базы, все реквизиты подтянутся автоматически.</p>
+            </div>
+            <div class="feature-card glass" data-hover="glow">
+                <div class="feature-icon"><i class="fas fa-file-export"></i></div>
+                <h3>Экспорт и импорт</h3>
+                <p>Выгружайте справочники в JSON и переносите между устройствами. Резервное копирование в один клик.</p>
+            </div>
+            <div class="feature-card glass" data-hover="glow">
+                <div class="feature-icon"><i class="fas fa-code"></i></div>
+                <h3>Готовый XML для ЭДО</h3>
+                <p>Генерация файла строго по схеме 5.01 титула Т1, подходит для загрузки любому оператору ЭДО.</p>
+            </div>
+            <div class="feature-card glass" data-hover="glow">
+                <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+                <h3>Локальная работа</h3>
+                <p>Все данные хранятся в вашем браузере. Никаких серверов — только вы и ваша база.</p>
+            </div>
+        </div>
+
+        <!-- How it works -->
+        <div class="steps-section">
+            <div class="section-title">
+                <h2>Как это работает</h2>
+                <p>Три простых шага до готового XML для ЭДО</p>
+            </div>
+            <div class="steps-grid">
+                <div class="step-card glass" data-hover="lift">
+                    <div class="step-number">1</div>
+                    <h3><i class="fas fa-database"></i> Наполните базу</h3>
+                    <p>Добавьте ваших контрагентов, водителей и транспорт в удобные формы.</p>
+                </div>
+                <div class="step-card glass" data-hover="lift">
+                    <div class="step-number">2</div>
+                    <h3><i class="fas fa-pen-alt"></i> Заполните накладную</h3>
+                    <p>Выберите участников из списка, укажите отсеки с грузом и параметры перевозки.</p>
+                </div>
+                <div class="step-card glass" data-hover="lift">
+                    <div class="step-number">3</div>
+                    <h3><i class="fas fa-download"></i> Скачайте XML</h3>
+                    <p>Нажмите кнопку — файл готов к загрузке оператору ЭДО.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer glass">
+        <div class="footer-content">
+            <p>© 2025 этрн.online | Формирователь XML для ЭТрН · Титул Т1 · Версия 3.0</p>
+            <p style="margin-top: 8px; font-size: 0.7rem;">XML-файлы соответствуют требованиям ГИС ЭТрН и готовы к передаче через оператора ЭДО</p>
+            <button class="footer-btn" id="privacyPolicyBtn">
+                <i class="fas fa-shield-alt"></i> Политика безопасности
+            </button>
+        </div>
+    </footer>
+
+    <!-- Модальное окно авторизации -->
+    <div id="authModal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h3><i class="fas fa-lock"></i> Доступ к сервису</h3>
+                <button class="close-modal" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-fields">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Логин</label>
+                    <input type="text" id="loginInput" class="glass-input" placeholder="Введите логин" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-key"></i> Пароль</label>
+                    <input type="password" id="passwordInput" class="glass-input" placeholder="Введите пароль">
+                </div>
+                <div id="authError" class="auth-error"></div>
+            </div>
+            <div class="modal-buttons">
+                <button id="demoBtn" class="btn btn-demo">
+                    <i class="fas fa-user-friends"></i> ДЕМО режим
+                </button>
+                <button id="loginBtn" class="btn btn-primary">Войти</button>
+                <button id="cancelAuthBtn" class="btn btn-outline">Отмена</button>
+            </div>
+            <div class="modal-hint">
+                <i class="fas fa-info-circle"></i> Тестовый доступ: azs / azs123
+            </div>
+            <div class="modal-hint" style="justify-content: space-between; flex-wrap: wrap;">
+                <span><i class="fas fa-info-circle"></i> Демо: demo / demo</span>
+                <a href="tariffs.html" style="color: #2c7ab1;">💎 Приобрести полный доступ →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно политики безопасности -->
+    <div id="privacyModal" class="modal">
+        <div class="modal-content glass modal-privacy">
+            <div class="modal-header">
+                <h3><i class="fas fa-shield-alt"></i> Политика безопасности</h3>
+                <button class="close-modal" id="closePrivacyModal">&times;</button>
+            </div>
+            <div class="modal-privacy-content">
+                <div class="privacy-section">
+                    <i class="fas fa-balance-scale"></i>
+                    <h4>Соответствие Федеральному закону от 27.07.2006 № 152-ФЗ</h4>
+                    <p>Настоящий сервис полностью соответствует требованиям Федерального закона «О персональных данных» № 152-ФЗ.</p>
+                </div>
+                
+                <div class="privacy-section">
+                    <i class="fas fa-database"></i>
+                    <h4>Локальное хранение данных</h4>
+                    <p><strong>Мы НЕ собираем и НЕ храним ваши данные на своих серверах.</strong> Вся информация (контрагенты, накладные, настройки) сохраняется исключительно в локальном хранилище вашего браузера (IndexedDB). Никакие данные не передаются на внешние серверы.</p>
+                </div>
+                
+                <div class="privacy-section">
+                    <i class="fas fa-envelope"></i>
+                    <h4>Получение доступа</h4>
+                    <p>Логин и пароль для доступа к полной версии сервиса предоставляются по официальному запросу. Для получения учетных данных направьте письмо на адрес: <strong>support@etrn.online</strong></p>
+                    <p>В письме укажите:<br>
+                    — Наименование организации<br>
+                    — ИНН<br>
+                    — Контактное лицо и телефон</p>
+                </div>
+                
+                <div class="privacy-section">
+                    <i class="fas fa-chart-line"></i>
+                    <h4>Отсутствие сбора метрик</h4>
+                    <p>Сервис не использует счетчики аналитики, не собирает метрики посещений и не отслеживает действия пользователей. Ваше взаимодействие с сервисом полностью анонимно.</p>
+                </div>
+                
+                <div class="privacy-section">
+                    <i class="fas fa-check-circle"></i>
+                    <h4>Ваши права</h4>
+                    <p>В соответствии с 152-ФЗ вы имеете право на:<br>
+                    — доступ к своим персональным данным<br>
+                    — требование уточнения, блокирования или уничтожения данных<br>
+                    — отзыв согласия на обработку данных<br>
+                    Поскольку все данные хранятся локально в вашем браузере, вы можете полностью контролировать их самостоятельно.</p>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="closePrivacyBtn" class="btn btn-primary">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Подключаем Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/landing.js"></script>
+</body>
+</html>

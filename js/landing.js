@@ -51,9 +51,9 @@ async function checkAuth(role = null) {
     loginBtn.disabled = true;
 
     try {
-        // Ищем пользователя в Supabase
+        // Ищем пользователя в Supabase (используем маленькие буквы - etrnusers)
         const { data: users, error } = await supabaseClient
-            .from('etrnUSERS')
+            .from('etrnusers')  // ← ВАЖНО: все маленькие буквы
             .select('*')
             .eq('name', login)
             .eq('active', true)
@@ -82,9 +82,9 @@ async function checkAuth(role = null) {
             return false;
         }
 
-        // Проверка срока действия
-        if (isPasswordExpired(user.expiresat)) {
-            authError.textContent = `Срок действия пароля истёк. Доступ был до ${user.expiresat}`;
+        // Проверка срока действия (обратите внимание: expires_at вместо expiresAt)
+        if (isPasswordExpired(user.expires_at)) {
+            authError.textContent = `Срок действия пароля истёк. Доступ был до ${user.expires_at}`;
             passwordInput.value = '';
             passwordInput.focus();
             return false;
@@ -98,8 +98,8 @@ async function checkAuth(role = null) {
             id: user.id,
             login: user.name,
             role: user.role || 'full',
-            displayName: user.displayname || user.name,
-            expiresAt: user.expiresat
+            displayName: user.display_name || user.name,
+            expiresAt: user.expires_at
         };
         sessionStorage.setItem('etrn_user', JSON.stringify(userData));
         

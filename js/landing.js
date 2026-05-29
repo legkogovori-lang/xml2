@@ -28,17 +28,28 @@ function isPasswordExpired(expiresAt) {
     return today > expireDate;
 }
 
-// Функция проверки авторизации через Supabase
+// Функция проверки авторизации через Supabase (только для реальных пользователей)
 async function checkAuth(role = null) {
-    let login, password;
-
+    // ДЕМО РЕЖИМ - НЕ проверяем в Supabase
     if (role === 'demo') {
-        login = 'demo';
-        password = 'demo';
-    } else {
-        login = loginInput.value.trim();
-        password = passwordInput.value;
+        closeAuthModal();
+        
+        // Сохраняем демо-пользователя
+        const userData = {
+            login: 'demo',
+            role: 'demo',
+            displayName: 'Демо-режим',
+            isDemo: true  // флаг, что это демо
+        };
+        sessionStorage.setItem('etrn_user', JSON.stringify(userData));
+        
+        window.location.href = 'app.html';
+        return true;
     }
+    
+    // Обычная авторизация - проверяем в Supabase
+    const login = loginInput.value.trim();
+    const password = passwordInput.value;
 
     if (!login || !password) {
         authError.textContent = 'Введите логин и пароль';
@@ -51,9 +62,9 @@ async function checkAuth(role = null) {
     loginBtn.disabled = true;
 
     try {
-        // Ищем пользователя в Supabase (используем маленькие буквы - etrnusers)
+        // Ищем пользователя в Supabase
         const { data: users, error } = await supabaseClient
-            .from('etrnusers')  // ← ВАЖНО: все маленькие буквы
+            .from('etrnusers')
             .select('*')
             .eq('name', login)
             .eq('active', true)
@@ -82,7 +93,7 @@ async function checkAuth(role = null) {
             return false;
         }
 
-        // Проверка срока действия (обратите внимание: expires_at вместо expiresAt)
+        // Проверка срока действия
         if (isPasswordExpired(user.expires_at)) {
             authError.textContent = `Срок действия пароля истёк. Доступ был до ${user.expires_at}`;
             passwordInput.value = '';
@@ -99,11 +110,11 @@ async function checkAuth(role = null) {
             login: user.name,
             role: user.role || 'full',
             displayName: user.display_name || user.name,
-            expiresAt: user.expires_at
+            expiresAt: user.expires_at,
+            isDemo: false
         };
         sessionStorage.setItem('etrn_user', JSON.stringify(userData));
         
-        // Переход на страницу сервиса
         window.location.href = 'app.html';
         return true;
 

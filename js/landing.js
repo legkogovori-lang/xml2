@@ -5,16 +5,6 @@ const SUPABASE_ANON_KEY = 'sb_publishable_zLJTwgWmldicE9FydB0Xgg_2BmxmgbB';
 // Инициализация Supabase клиента
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Функция для хеширования пароля (SHA-256)
-async function hashPassword(password) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
-}
-
 // Элементы DOM
 const goToAppBtn = document.getElementById('goToAppBtn');
 const authModal = document.getElementById('authModal');
@@ -62,6 +52,7 @@ async function checkAuth(role = null) {
         return false;
     }
 
+    // Показываем состояние загрузки
     const originalBtnText = loginBtn.innerHTML;
     loginBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Проверка...';
     loginBtn.disabled = true;
@@ -90,19 +81,8 @@ async function checkAuth(role = null) {
 
         const user = users[0];
 
-        // Проверяем пароль через хеш
-        const hashedInputPassword = await hashPassword(password);
-        
-        // Сравниваем с хешем в БД (поддержка старого формата)
-        let isPasswordValid = false;
-        if (user.password_hash) {
-            isPasswordValid = (hashedInputPassword === user.password_hash);
-        } else if (user.password) {
-            // Обратная совместимость
-            isPasswordValid = (user.password === password);
-        }
-
-        if (!isPasswordValid) {
+        // Проверка пароля (обычное сравнение)
+        if (user.password !== password) {
             authError.textContent = 'Неверный логин или пароль';
             passwordInput.value = '';
             passwordInput.focus();
@@ -117,8 +97,10 @@ async function checkAuth(role = null) {
             return false;
         }
 
+        // Авторизация успешна
         closeAuthModal();
         
+        // Сохраняем данные пользователя
         const userData = {
             id: user.id,
             login: user.name,
@@ -142,7 +124,7 @@ async function checkAuth(role = null) {
     }
 }
 
-// Остальные функции без изменений...
+// Функция открытия модального окна авторизации
 function openAuthModal() {
     authModal.style.display = 'flex';
     loginInput.value = '';
@@ -151,25 +133,30 @@ function openAuthModal() {
     setTimeout(() => loginInput.focus(), 100);
 }
 
+// Функция закрытия модального окна авторизации
 function closeAuthModal() {
     authModal.style.display = 'none';
     authError.textContent = '';
 }
 
+// Функция открытия модального окна политики безопасности
 function openPrivacyModal() {
     privacyModal.style.display = 'flex';
 }
 
+// Функция закрытия модального окна политики безопасности
 function closePrivacyModalFunc() {
     privacyModal.style.display = 'none';
 }
 
+// Обработчик Enter
 function handleKeyPress(e) {
     if (e.key === 'Enter') {
         checkAuth();
     }
 }
 
+// Бесконечная прокрутка XML
 function setupInfiniteScroll() {
     const xmlContainer = document.getElementById('scrollingXml');
     if (!xmlContainer) return;
@@ -177,6 +164,7 @@ function setupInfiniteScroll() {
     xmlContainer.innerHTML = originalContent + originalContent;
 }
 
+// Анимация карточек
 function setupScrollAnimation() {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -184,12 +172,13 @@ function setupScrollAnimation() {
                 entry.target.classList.add('visible');
             }
         });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    }, { threshold: 0.1 });
     document.querySelectorAll('.feature-card, .step-card').forEach(el => {
         observer.observe(el);
     });
 }
 
+// Пауза прокрутки XML при наведении
 function setupXmlHover() {
     const xmlWrapper = document.querySelector('.preview-xml-wrapper');
     const xmlContent = document.getElementById('scrollingXml');
@@ -203,6 +192,7 @@ function setupXmlHover() {
     }
 }
 
+// Навешиваем обработчики
 goToAppBtn.addEventListener('click', openAuthModal);
 closeModalBtn.addEventListener('click', closeAuthModal);
 cancelAuthBtn.addEventListener('click', closeAuthModal);
@@ -230,9 +220,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setupInfiniteScroll();
     setupScrollAnimation();
     setupXmlHover();
+    
     const hero = document.querySelector('.hero');
     if (hero) hero.style.opacity = '1';
     
+    // Эффект ripple для кнопок
     const buttons = document.querySelectorAll('.btn, .cta-button, .footer-btn');
     buttons.forEach(btn => {
         btn.addEventListener('click', (e) => {

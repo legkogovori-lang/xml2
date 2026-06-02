@@ -5,112 +5,7 @@ let currentCategory = 'shippers';
 let currentEditId = null;
 let dbSearchTerm = '';
 let compartments = []; // Массив для хранения отсеков
-// Получение текущего пользователя
 let currentUser = null;
-
-// Получение текущего пользователя из sessionStorage
-function loadCurrentUser() {
-    const userData = sessionStorage.getItem('etrn_user');
-    if (userData) {
-        try {
-            currentUser = JSON.parse(userData);
-            
-            // Если есть сообщение об истечении срока - показываем
-            if (currentUser.expiredMessage) {
-                setTimeout(() => {
-                    statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${currentUser.expiredMessage}`;
-                }, 500);
-            }
-            
-            displayUserInfo();
-        } catch(e) {
-            console.error('Ошибка загрузки пользователя', e);
-            window.location.href = 'index.html';
-        }
-    } else {
-        window.location.href = 'index.html';
-    }
-}
-
-// Дополнительная проверка существования пользователя в Supabase (только для НЕ-демо)
-async function verifyUserInSupabase() {
-    if (!currentUser || !supabaseClient || currentUser.isDemo) return;
-    
-    try {
-        const { data, error } = await supabaseClient
-            .from('etrnusers')
-            .select('active, expires_at')
-            .eq('name', currentUser.login)
-            .eq('active', true)
-            .single();
-        
-        if (error || !data) {
-            console.warn('Пользователь не найден в Supabase');
-            return;
-        }
-        
-        if (data.expires_at && new Date(data.expires_at) < new Date()) {
-            sessionStorage.removeItem('etrn_user');
-            alert('Срок действия доступа истёк. Пожалуйста, продлите подписку.');
-            window.location.href = 'index.html';
-        }
-    } catch(e) {
-        console.warn('Ошибка проверки в Supabase:', e);
-    }
-}
-
-function displayUserInfo() {
-    if (!currentUser) return;
-    
-    const userInfoDiv = document.createElement('div');
-    userInfoDiv.className = 'user-info';
-    userInfoDiv.innerHTML = `
-        <i class="fas fa-user-circle"></i>
-        <span>${currentUser.displayName || currentUser.login}</span>
-        ${currentUser.role === 'demo' || currentUser.isDemo ? '<span class="demo-badge">ДЕМО</span>' : ''}
-        <button class="logout-btn" id="logoutBtn" title="Выйти"><i class="fas fa-sign-out-alt"></i></button>
-    `;
-    
-    const header = document.querySelector('.glass-header');
-    const existingUserInfo = header.querySelector('.user-info');
-    if (existingUserInfo) existingUserInfo.remove();
-    
-    const headerActions = header.querySelector('.header-actions');
-    if (headerActions) {
-        headerActions.insertBefore(userInfoDiv, headerActions.firstChild);
-    } else {
-        header.appendChild(userInfoDiv);
-    }
-    
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            sessionStorage.removeItem('etrn_user');
-            window.location.href = 'index.html';
-        });
-    }
-    
-    if (currentUser.role === 'demo' || currentUser.isDemo) {
-        showDemoLimits();
-    }
-}
-
-function showDemoLimits() {
-    const statusMsgDiv = document.getElementById('statusMsg');
-    if (statusMsgDiv) {
-        const demoWarning = document.createElement('div');
-        demoWarning.className = 'demo-warning';
-        demoWarning.innerHTML = `
-            <i class="fas fa-info-circle"></i>
-            ДЕМО-РЕЖИМ: не более 5 записей в каждой категории. 
-            Для полной версии войдите под своим логином.
-        `;
-        const dbPanel = document.querySelector('.db-panel');
-        if (dbPanel && !dbPanel.querySelector('.demo-warning')) {
-            dbPanel.insertBefore(demoWarning, dbPanel.querySelector('.db-tabs'));
-        }
-    }
-}
 
 // DOM элементы
 const generateBtn = document.getElementById('generateBtn');
@@ -131,10 +26,80 @@ const closeModalBtn = document.querySelector('.close-modal');
 const inputs = {};
 const selectedItems = {};
 
+// Получение текущего пользователя из sessionStorage
+function loadCurrentUser() {
+    const userData = sessionStorage.getItem('etrn_user');
+    if (userData) {
+        try {
+            currentUser = JSON.parse(userData);
+            if (currentUser.expiredMessage) {
+                setTimeout(() => {
+                    if (statusMsg) statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${currentUser.expiredMessage}`;
+                }, 500);
+            }
+            displayUserInfo();
+        } catch(e) {
+            console.error('Ошибка загрузки пользователя', e);
+            window.location.href = 'index.html';
+        }
+    }
+}
+
+function displayUserInfo() {
+    if (!currentUser) return;
+    
+    const userInfoDiv = document.createElement('div');
+    userInfoDiv.className = 'user-info';
+    userInfoDiv.innerHTML = `
+        <i class="fas fa-user-circle"></i>
+        <span>${currentUser.displayName || currentUser.login}</span>
+        ${currentUser.role === 'demo' || currentUser.isDemo ? '<span class="demo-badge">ДЕМО</span>' : ''}
+        <button class="logout-btn" id="logoutBtn" title="Выйти"><i class="fas fa-sign-out-alt"></i></button>
+    `;
+    
+    const header = document.querySelector('.glass-header');
+    if (header) {
+        const existingUserInfo = header.querySelector('.user-info');
+        if (existingUserInfo) existingUserInfo.remove();
+        
+        const headerActions = header.querySelector('.header-actions');
+        if (headerActions) {
+            headerActions.insertBefore(userInfoDiv, headerActions.firstChild);
+        } else {
+            header.appendChild(userInfoDiv);
+        }
+    }
+    
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            sessionStorage.removeItem('etrn_user');
+            window.location.href = 'index.html';
+        });
+    }
+    
+    if (currentUser.role === 'demo' || currentUser.isDemo) {
+        showDemoLimits();
+    }
+}
+
+function showDemoLimits() {
+    const dbPanel = document.querySelector('.db-panel');
+    if (dbPanel && !dbPanel.querySelector('.demo-warning')) {
+        const demoWarning = document.createElement('div');
+        demoWarning.className = 'demo-warning';
+        demoWarning.innerHTML = `
+            <i class="fas fa-info-circle"></i>
+            ДЕМО-РЕЖИМ: не более 5 записей в каждой категории.
+        `;
+        dbPanel.insertBefore(demoWarning, dbPanel.querySelector('.db-tabs'));
+    }
+}
+
 // Инициализация
 document.addEventListener('DOMContentLoaded', async () => {
     loadCurrentUser();
-    statusMsg.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Загрузка базы данных...';
+    if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Загрузка базы данных...';
     
     await initDatabase();
     createSearchInputs();
@@ -145,14 +110,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Установка даты по умолчанию
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('shipmentDate').value = today;
+    const shipmentDateInput = document.getElementById('shipmentDate');
+    if (shipmentDateInput) shipmentDateInput.value = today;
     
-    statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> База данных IndexedDB готова';
-    setTimeout(() => {
-        if (statusMsg.innerHTML.includes('готова')) {
-            statusMsg.innerHTML = '';
-        }
-    }, 2000);
+    if (statusMsg) {
+        statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> База данных IndexedDB готова';
+        setTimeout(() => {
+            if (statusMsg.innerHTML.includes('готова')) {
+                statusMsg.innerHTML = '';
+            }
+        }, 2000);
+    }
 });
 
 // Кнопка возврата на главную
@@ -171,55 +139,50 @@ function initCompartments() {
 // Добавление нового отсека
 function addCompartment() {
     const container = document.getElementById('compartmentsContainer');
+    if (!container) return;
+    
     const compartmentId = Date.now();
     
     const compartmentDiv = document.createElement('div');
     compartmentDiv.className = 'compartment-card';
     compartmentDiv.dataset.id = compartmentId;
+    compartmentDiv.style.cssText = 'background: rgba(255,255,255,0.5); border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 1px solid rgba(44,122,177,0.2);';
     
     compartmentDiv.innerHTML = `
-        <div class="compartment-header">
-            <span class="compartment-title">Отсек ${compartments.length + 1}</span>
-            <button type="button" class="remove-compartment-btn" onclick="removeCompartment(${compartmentId})">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <strong style="color: #1a5d85;">Отсек ${compartments.length + 1}</strong>
+            <button type="button" class="remove-compartment-btn" style="background: rgba(200,70,70,0.1); border: none; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; color: #c04444;" onclick="removeCompartment(${compartmentId})">
                 <i class="fas fa-trash-alt"></i>
             </button>
         </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label><i class="fas fa-oil-can"></i> Продукт</label>
-                <div class="product-search-container" data-compartment="${compartmentId}">
-                    <input type="text" id="productInput_${compartmentId}" class="glass-input product-search-input" placeholder="-- Введите для поиска --" autocomplete="off">
-                </div>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px;">
+            <div style="flex: 1; min-width: 180px;">
+                <label style="font-size: 0.7rem; color: #4a6f8a;">Продукт</label>
+                <input type="text" id="productInput_${compartmentId}" class="glass-input" placeholder="-- Введите для поиска --" autocomplete="off">
             </div>
-            <div class="form-group">
-                <label><i class="fas fa-barcode"></i> Код ТН ВЭД</label>
-                <input type="text" id="tnvedCode_${compartmentId}" class="glass-input tnved-input" placeholder="Определяется из продукта" readonly>
+            <div style="flex: 1; min-width: 180px;">
+                <label style="font-size: 0.7rem; color: #4a6f8a;">Код ТН ВЭД</label>
+                <input type="text" id="tnvedCode_${compartmentId}" class="glass-input" placeholder="Определяется из продукта" readonly style="background:#f0f0f0;">
             </div>
         </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label><i class="fas fa-weight-hanging"></i> Масса брутто (тонн)</label>
-                <input type="number" step="0.001" id="weight_${compartmentId}" class="glass-input weight-input" placeholder="12.000">
+        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+            <div style="flex: 1;">
+                <label style="font-size: 0.7rem; color: #4a6f8a;">Масса (тонн)</label>
+                <input type="number" step="0.001" id="weight_${compartmentId}" class="glass-input" placeholder="0.000">
             </div>
-            <div class="form-group">
-                <label><i class="fas fa-cubes"></i> Количество мест</label>
-                <input type="number" step="1" id="places_${compartmentId}" class="glass-input places-input" placeholder="1" value="1">
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label><i class="fas fa-chart-line"></i> Плотность (кг/м³)</label>
-                <input type="text" id="density_${compartmentId}" class="glass-input density-input" placeholder="0.845">
-            </div>
-            <div class="form-group">
-                <label><i class="fas fa-thermometer-half"></i> Температура (°C)</label>
-                <input type="text" id="temp_${compartmentId}" class="glass-input temp-input" placeholder="18.5">
+            <div style="flex: 1;">
+                <label style="font-size: 0.7rem; color: #4a6f8a;">Количество мест</label>
+                <input type="number" step="1" id="places_${compartmentId}" class="glass-input" placeholder="1" value="1">
             </div>
         </div>
-        <div class="form-row">
-            <div class="form-group full-width">
-                <label><i class="fas fa-tag"></i> Маркировка/описание</label>
-                <input type="text" id="marking_${compartmentId}" class="glass-input marking-input" placeholder="Отсутствует">
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px;">
+            <div style="flex: 1;">
+                <label style="font-size: 0.7rem; color: #4a6f8a;">Плотность (кг/м³)</label>
+                <input type="text" id="density_${compartmentId}" class="glass-input" placeholder="0.845">
+            </div>
+            <div style="flex: 1;">
+                <label style="font-size: 0.7rem; color: #4a6f8a;">Температура (°C)</label>
+                <input type="text" id="temp_${compartmentId}" class="glass-input" placeholder="18.5">
             </div>
         </div>
     `;
@@ -233,8 +196,7 @@ function addCompartment() {
         weight: '',
         places: 1,
         density: '0.845',
-        temp: '18.5',
-        marking: 'Отсутствует'
+        temp: '18.5'
     });
     
     setupProductSearchForCompartment(compartmentId);
@@ -324,22 +286,14 @@ async function setupProductSearchForCompartment(compartmentId) {
             if (compartment) compartment.temp = this.value;
         };
     }
-    
-    const markingInput = document.getElementById(`marking_${compartmentId}`);
-    if (markingInput) {
-        markingInput.oninput = function() {
-            const compartment = compartments.find(c => c.id === compartmentId);
-            if (compartment) compartment.marking = this.value || 'Отсутствует';
-        };
-    }
 }
 
 // Удаление отсека
 function removeCompartment(id) {
     if (compartments.length <= 1) {
-        statusMsg.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Должен быть хотя бы один отсек';
+        if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Должен быть хотя бы один отсек';
         setTimeout(() => {
-            if (statusMsg.innerHTML.includes('хотя бы один')) {
+            if (statusMsg && statusMsg.innerHTML.includes('хотя бы один')) {
                 statusMsg.innerHTML = '';
             }
         }, 2000);
@@ -359,7 +313,7 @@ function removeCompartment(id) {
 function updateCompartmentTitles() {
     const cards = document.querySelectorAll('.compartment-card');
     cards.forEach((card, idx) => {
-        const title = card.querySelector('.compartment-title');
+        const title = card.querySelector('strong');
         if (title) {
             title.textContent = `Отсек ${idx + 1}`;
         }
@@ -379,7 +333,7 @@ function createSearchInputs() {
             input.className = 'glass-input';
             input.placeholder = '-- Введите для поиска --';
             input.autocomplete = 'off';
-            input.setAttribute('data-category', category);
+            container.innerHTML = '';
             container.appendChild(input);
             inputs[category] = input;
             selectedItems[category] = null;
@@ -410,7 +364,7 @@ async function populateAllSelects() {
                 case 'carriers': displayText = `${item.name} (${item.inn})`; break;
                 case 'drivers': displayText = `${item.fullName} / ${item.license}`; break;
                 case 'signers': displayText = `${item.fio} (${item.position})`; break;
-                case 'vehicles': displayText = `${item.regNumber} (${item.brand || item.nationality})`; break;
+                case 'vehicles': displayText = `${item.regNumber}`; break;
             }
             option.value = displayText;
             option.setAttribute('data-json', JSON.stringify(item));
@@ -427,10 +381,8 @@ async function populateAllSelects() {
                 const matchedOption = Array.from(datalist.options).find(opt => opt.value === value);
                 if (matchedOption) {
                     selectedItems[category] = JSON.parse(matchedOption.getAttribute('data-json'));
-                    this.setAttribute('data-selected', JSON.stringify(selectedItems[category]));
                 } else {
                     selectedItems[category] = null;
-                    this.removeAttribute('data-selected');
                 }
             };
         }
@@ -445,6 +397,7 @@ function getSelectedFromSearch(category) {
 // Рендер левой панели с поиском
 async function renderDatabasePanel() {
     const dbContent = document.getElementById('dbContent');
+    if (!dbContent) return;
     
     dbContent.innerHTML = `
         <div class="db-search-wrapper">
@@ -464,20 +417,20 @@ async function renderDatabasePanel() {
     
     const itemsContainer = document.getElementById('dbCategoryItems');
     if (itemsContainer) {
-        itemsContainer.innerHTML = items.map(item => `
-            <div class="db-item" data-id="${item.id}" data-category="${currentCategory}">
-                <div class="db-item-info">
-                    <strong>${escapeHtml(getItemDisplay(currentCategory, item))}</strong>
-                    <small>${escapeHtml(getItemDetails(currentCategory, item))}</small>
-                </div>
-                <button class="delete-item" data-id="${item.id}" data-category="${currentCategory}">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </div>
-        `).join('');
-        
         if (items.length === 0) {
             itemsContainer.innerHTML = '<div class="empty-state">📭 Нет записей. Нажмите "Добавить"</div>';
+        } else {
+            itemsContainer.innerHTML = items.map(item => `
+                <div class="db-item" data-id="${item.id}" data-category="${currentCategory}">
+                    <div class="db-item-info">
+                        <strong>${escapeHtml(getItemDisplay(currentCategory, item))}</strong>
+                        <small>${escapeHtml(getItemDetails(currentCategory, item))}</small>
+                    </div>
+                    <button class="delete-item" data-id="${item.id}" data-category="${currentCategory}">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            `).join('');
         }
     }
     
@@ -499,16 +452,16 @@ async function renderDatabasePanel() {
                 if (confirm('Удалить запись?')) {
                     try {
                         await deleteItem(category, id);
-                        statusMsg.innerHTML = `✅ Запись удалена из категории ${getCategoryNameRu(category)}`;
+                        if (statusMsg) statusMsg.innerHTML = `✅ Запись удалена`;
                         await renderDatabasePanel();
                         await populateAllSelects();
                         setTimeout(() => {
-                            if (statusMsg.innerHTML.includes('удалена')) {
+                            if (statusMsg && statusMsg.innerHTML.includes('удалена')) {
                                 statusMsg.innerHTML = '';
                             }
                         }, 2000);
                     } catch (error) {
-                        statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка удаления: ${error.message}`;
+                        if (statusMsg) statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка удаления: ${error.message}`;
                     }
                 }
             }
@@ -527,9 +480,9 @@ async function renderDatabasePanel() {
             const found = itemsList.find(i => i.id === id);
             if (found) {
                 quickFillByCategory(category, found);
-                statusMsg.innerHTML = `📋 Данные из ${getCategoryNameRu(category)} загружены в форму`;
+                if (statusMsg) statusMsg.innerHTML = `📋 Данные загружены в форму`;
                 setTimeout(() => {
-                    if (statusMsg.innerHTML.includes('загружены')) {
+                    if (statusMsg && statusMsg.innerHTML.includes('загружены')) {
                         statusMsg.innerHTML = '';
                     }
                 }, 2000);
@@ -556,19 +509,18 @@ function getItemDisplay(category, item) {
         case 'drivers': return item.fullName;
         case 'signers': return item.fio;
         case 'vehicles': return item.regNumber;
-        case 'products': return item.name;
         default: return '';
     }
 }
 
 function getItemDetails(category, item) {
     switch(category) {
-        case 'shippers': return `ИНН: ${item.inn}`;
-        case 'consignees': return `ИНН: ${item.inn}`;
-        case 'carriers': return `ИНН: ${item.inn}`;
-        case 'drivers': return `уд. ${item.license}`;
-        case 'signers': return item.position;
-        case 'vehicles': return item.brand || item.nationality;
+        case 'shippers': return `ИНН: ${item.inn || ''}`;
+        case 'consignees': return `ИНН: ${item.inn || ''}`;
+        case 'carriers': return `ИНН: ${item.inn || ''}`;
+        case 'drivers': return `уд. ${item.license || ''}`;
+        case 'signers': return item.position || '';
+        case 'vehicles': return item.nationality || '';
         default: return '';
     }
 }
@@ -583,12 +535,11 @@ function quickFillByCategory(category, data) {
         case 'carriers': displayText = `${data.name} (${data.inn})`; break;
         case 'drivers': displayText = `${data.fullName} / ${data.license}`; break;
         case 'signers': displayText = `${data.fio} (${data.position})`; break;
-        case 'vehicles': displayText = `${data.regNumber} (${data.brand || data.nationality})`; break;
+        case 'vehicles': displayText = `${data.regNumber}`; break;
     }
     
     inputs[category].value = displayText;
     selectedItems[category] = data;
-    inputs[category].setAttribute('data-selected', JSON.stringify(data));
 }
 
 // Форматирование даты для XML
@@ -599,12 +550,6 @@ function formatDateForXML(dateStr) {
         return `${parts[2]}.${parts[1]}.${parts[0]}`;
     }
     return dateStr;
-}
-
-// Форматирование времени
-function getCurrentTime() {
-    const now = new Date();
-    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
 }
 
 // Генерация GUID
@@ -629,7 +574,7 @@ function generateFileName() {
     return `ON_TRNVPRGO_${guid1}_${guid2}_0_${dateStr}_${guid3}`;
 }
 
-// Генерация XML по новому формату ФНС (Приказ № ЕД-7-26/383@ от 14.05.2024)
+// Генерация XML по формату ФНС (Приказ № ЕД-7-26/383@)
 function generateXML() {
     try {
         const shipper = getSelectedFromSearch('shippers');
@@ -639,10 +584,14 @@ function generateXML() {
         const signer = getSelectedFromSearch('signers');
         const vehicle = getSelectedFromSearch('vehicles');
         
-        // Получаем основные данные формы
-        const ttnNumber = document.getElementById('ttnNumber').value.trim() || `ТТН-${Date.now()}`;
-        const shipmentDate = document.getElementById('shipmentDate').value;
-        const shipPoint = document.getElementById('shipmentPoint').value || "Резервуарный парк";
+        // Получаем основные данные формы с проверкой на существование
+        const ttnNumberInput = document.getElementById('ttnNumber');
+        const shipmentDateInput = document.getElementById('shipmentDate');
+        const shipPointInput = document.getElementById('shipmentPoint');
+        
+        const ttnNumber = ttnNumberInput?.value.trim() || `ТТН-${Date.now()}`;
+        const shipmentDate = shipmentDateInput?.value || new Date().toISOString().split('T')[0];
+        const shipPoint = shipPointInput?.value || "Резервуарный парк";
         
         // Проверка обязательных полей
         if (!shipper.name) throw new Error("Выберите грузоотправителя");
@@ -652,14 +601,10 @@ function generateXML() {
         
         // Собираем данные по отсекам
         const compartmentsData = [];
-        let totalWeight = 0;
-        let totalPlaces = 0;
         
         for (const comp of compartments) {
             const weight = parseFloat(comp.weight) || 0;
             const places = parseInt(comp.places) || 1;
-            totalWeight += weight;
-            totalPlaces += places;
             
             compartmentsData.push({
                 productName: comp.product ? comp.product.name : 'Нефть сырая',
@@ -667,8 +612,7 @@ function generateXML() {
                 weight: weight.toFixed(3),
                 places: places,
                 density: comp.density || '0.845',
-                temp: comp.temp || '18.5',
-                marking: comp.marking || 'Отсутствует'
+                temp: comp.temp || '18.5'
             });
         }
         
@@ -681,7 +625,7 @@ function generateXML() {
         const nowDate = new Date().toISOString().slice(0, 10);
         const idGuid = generateGuid();
         
-        // Генерация XML по формату ФНС (Приказ № ЕД-7-26/383@)
+        // Генерация XML по формату ФНС
         let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
         xml += `<ON_TRNVPRGO xmlns="http://www.nalog.ru/EDO/TTN/TransportationCustomer/033/..." xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ИдОтпр="${idGuid}" ВерсПрог="5.03">\n`;
         xml += `    <КНД>1110430</КНД>\n`;
@@ -752,11 +696,12 @@ function generateXML() {
         xml += `    </Подписант>\n`;
         xml += `</ON_TRNVPRGO>`;
         
-        xmlPreview.innerText = xml;
-        statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> XML успешно сформирован по формату ФНС (Приказ № ЕД-7-26/383@)';
+        if (xmlPreview) xmlPreview.innerText = xml;
+        if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> XML успешно сформирован по формату ФНС';
         return xml;
     } catch(e) {
-        statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка: ${e.message}`;
+        if (statusMsg) statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка: ${e.message}`;
+        console.error('XML Generation Error:', e);
         return null;
     }
 }
@@ -786,24 +731,23 @@ function downloadXML() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        statusMsg.innerHTML = '<i class="fas fa-download"></i> Файл скачан в формате ФНС';
+        if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-download"></i> Файл скачан';
     }
 }
 
 function copyXML() {
-    const xml = xmlPreview.innerText;
-    if (xml && !xml.includes('Заполните данные')) {
+    const xml = xmlPreview?.innerText;
+    if (xml && !xml.includes('Заполните')) {
         navigator.clipboard.writeText(xml);
-        statusMsg.innerHTML = '<i class="fas fa-copy"></i> XML скопирован в буфер';
+        if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-copy"></i> XML скопирован';
     } else {
-        statusMsg.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Сначала сгенерируйте XML';
+        if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Сначала сгенерируйте XML';
     }
 }
 
 // Modal handlers for adding entities
 function openAddModal() {
-    currentEditId = null;
-    modalTitle.innerText = `Добавить запись в категорию: ${getCategoryNameRu(currentCategory)}`;
+    if (modalTitle) modalTitle.innerText = `Добавить запись в категорию: ${getCategoryNameRu(currentCategory)}`;
     
     let fieldsHtml = '';
     switch(currentCategory) {
@@ -866,8 +810,8 @@ function openAddModal() {
             `;
             break;
     }
-    modalFields.innerHTML = fieldsHtml;
-    modal.style.display = 'flex';
+    if (modalFields) modalFields.innerHTML = fieldsHtml;
+    if (modal) modal.style.display = 'flex';
 }
 
 async function saveNewEntity() {
@@ -944,37 +888,42 @@ async function saveNewEntity() {
         await addItem(currentCategory, newItem);
         await renderDatabasePanel();
         await populateAllSelects();
-        modal.style.display = 'none';
-        statusMsg.innerHTML = `✅ Добавлено в категорию ${getCategoryNameRu(currentCategory)}`;
-        setTimeout(() => {
-            if (statusMsg.innerHTML.includes('Добавлено')) {
-                statusMsg.innerHTML = '';
-            }
-        }, 2000);
+        if (modal) modal.style.display = 'none';
+        if (statusMsg) {
+            statusMsg.innerHTML = `✅ Добавлено в категорию ${getCategoryNameRu(currentCategory)}`;
+            setTimeout(() => {
+                if (statusMsg.innerHTML.includes('Добавлено')) {
+                    statusMsg.innerHTML = '';
+                }
+            }, 2000);
+        }
     } catch (error) {
-        statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка: ${error.message}`;
+        if (statusMsg) statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка: ${error.message}`;
     }
 }
 
 function attachEventListeners() {
-    generateBtn.addEventListener('click', generateXML);
-    downloadBtn.addEventListener('click', downloadXML);
-    copyBtn.addEventListener('click', copyXML);
+    if (generateBtn) generateBtn.addEventListener('click', generateXML);
+    if (downloadBtn) downloadBtn.addEventListener('click', downloadXML);
+    if (copyBtn) copyBtn.addEventListener('click', copyXML);
     
-    refreshDbBtn.addEventListener('click', async () => { 
-        await renderDatabasePanel(); 
-        await populateAllSelects(); 
-        statusMsg.innerHTML = '<i class="fas fa-sync-alt"></i> База данных обновлена';
-        setTimeout(() => {
-            if (statusMsg.innerHTML.includes('обновлена')) {
-                statusMsg.innerHTML = '';
+    if (refreshDbBtn) {
+        refreshDbBtn.addEventListener('click', async () => { 
+            await renderDatabasePanel(); 
+            await populateAllSelects(); 
+            if (statusMsg) {
+                statusMsg.innerHTML = '<i class="fas fa-sync-alt"></i> База данных обновлена';
+                setTimeout(() => {
+                    if (statusMsg.innerHTML.includes('обновлена')) {
+                        statusMsg.innerHTML = '';
+                    }
+                }, 2000);
             }
-        }, 2000);
-    });
+        });
+    }
     
-    addEntityBtn.addEventListener('click', openAddModal);
+    if (addEntityBtn) addEntityBtn.addEventListener('click', openAddModal);
     
-    // Кнопка добавления отсека
     const addCompartmentBtn = document.getElementById('addCompartmentBtn');
     if (addCompartmentBtn) {
         addCompartmentBtn.addEventListener('click', () => addCompartment());
@@ -984,16 +933,16 @@ function attachEventListeners() {
     if (exportAllBtn) {
         exportAllBtn.addEventListener('click', async () => {
             try {
-                statusMsg.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Экспорт данных...';
+                if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Экспорт данных...';
                 await exportAllToFiles();
-                statusMsg.innerHTML = '<i class="fas fa-download"></i> База данных экспортирована';
+                if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-download"></i> База данных экспортирована';
                 setTimeout(() => {
-                    if (statusMsg.innerHTML.includes('экспортирована')) {
+                    if (statusMsg && statusMsg.innerHTML.includes('экспортирована')) {
                         statusMsg.innerHTML = '';
                     }
                 }, 3000);
             } catch (error) {
-                statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка экспорта: ${error.message}`;
+                if (statusMsg) statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка экспорта: ${error.message}`;
             }
         });
     }
@@ -1014,17 +963,17 @@ function attachEventListeners() {
         importFilesInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
             if (files.length > 0) {
-                statusMsg.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Импорт данных...';
+                if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Импорт данных...';
                 try {
                     const count = await importAllFromFiles(files);
-                    statusMsg.innerHTML = `<i class="fas fa-check-circle"></i> Импортировано ${count} файлов`;
+                    if (statusMsg) statusMsg.innerHTML = `<i class="fas fa-check-circle"></i> Импортировано ${count} файлов`;
                     await renderDatabasePanel();
                     await populateAllSelects();
                 } catch (error) {
-                    statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка импорта: ${error.message}`;
+                    if (statusMsg) statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка импорта: ${error.message}`;
                 }
                 setTimeout(() => {
-                    if (statusMsg.innerHTML.includes('Импортировано') || statusMsg.innerHTML.includes('Ошибка')) {
+                    if (statusMsg && (statusMsg.innerHTML.includes('Импортировано') || statusMsg.innerHTML.includes('Ошибка'))) {
                         statusMsg.innerHTML = '';
                     }
                 }, 3000);
@@ -1039,26 +988,25 @@ function attachEventListeners() {
             if (confirm('⚠️ ВНИМАНИЕ! Это действие удалит ВСЕ ваши данные.\n\nВы уверены?')) {
                 try {
                     await clearAllDatabase();
-                    statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> База данных очищена';
+                    if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> База данных очищена';
                     await renderDatabasePanel();
                     await populateAllSelects();
                     setTimeout(() => {
-                        if (statusMsg.innerHTML.includes('очищена')) {
+                        if (statusMsg && statusMsg.innerHTML.includes('очищена')) {
                             statusMsg.innerHTML = '';
                         }
                     }, 2000);
                 } catch (error) {
-                    statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка очистки: ${error.message}`;
+                    if (statusMsg) statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка очистки: ${error.message}`;
                 }
             }
         });
     }
     
-    saveEntityBtn.addEventListener('click', saveNewEntity);
-    cancelModalBtn.addEventListener('click', () => modal.style.display = 'none');
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
-    }
+    if (saveEntityBtn) saveEntityBtn.addEventListener('click', saveNewEntity);
+    if (cancelModalBtn) cancelModalBtn.addEventListener('click', () => { if (modal) modal.style.display = 'none'; });
+    if (closeModalBtn) closeModalBtn.addEventListener('click', () => { if (modal) modal.style.display = 'none'; });
+    
     window.addEventListener('click', (e) => { 
         if (e.target === modal) modal.style.display = 'none'; 
     });

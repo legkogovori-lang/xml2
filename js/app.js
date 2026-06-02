@@ -574,7 +574,7 @@ function generateFileName() {
     return `ON_TRNVPRGO_${guid1}_${guid2}_0_${dateStr}_${guid3}`;
 }
 
-// Генерация XML по формату ФНС (Приказ № ЕД-7-26/383@)
+// Генерация XML по формату ФНС (Приказ № ЕД-7-26/383@) - точное соответствие образцу
 function generateXML() {
     try {
         const shipper = getSelectedFromSearch('shippers');
@@ -584,14 +584,36 @@ function generateXML() {
         const signer = getSelectedFromSearch('signers');
         const vehicle = getSelectedFromSearch('vehicles');
         
-        // Получаем основные данные формы с проверкой на существование
+        // Получаем основные данные формы
         const ttnNumberInput = document.getElementById('ttnNumber');
         const shipmentDateInput = document.getElementById('shipmentDate');
         const shipPointInput = document.getElementById('shipmentPoint');
+        const contractNumberInput = document.getElementById('contractNumber');
+        const contractDateInput = document.getElementById('contractDate');
+        const addressIndexInput = document.getElementById('addressIndex');
+        const addressRegionInput = document.getElementById('addressRegion');
+        const addressStreetInput = document.getElementById('addressStreet');
+        const addressHouseInput = document.getElementById('addressHouse');
+        const addressBuildingInput = document.getElementById('addressBuilding');
+        const deliveryAddressIndexInput = document.getElementById('deliveryAddressIndex');
+        const deliveryAddressRegionInput = document.getElementById('deliveryAddressRegion');
+        const cargoValueInput = document.getElementById('cargoValue');
+        const loadMethodInput = document.getElementById('loadMethod');
         
-        const ttnNumber = ttnNumberInput?.value.trim() || `ТТН-${Date.now()}`;
+        const ttnNumber = ttnNumberInput?.value.trim() || `21323`;
         const shipmentDate = shipmentDateInput?.value || new Date().toISOString().split('T')[0];
         const shipPoint = shipPointInput?.value || "Резервуарный парк";
+        const contractNumber = contractNumberInput?.value.trim() || "1234";
+        const contractDate = contractDateInput?.value || shipmentDate;
+        const addressIndex = addressIndexInput?.value || "109472";
+        const addressRegion = addressRegionInput?.value || "77";
+        const addressStreet = addressStreetInput?.value || "ВОЛГОГРАДСКИЙ ПР-КТ";
+        const addressHouse = addressHouseInput?.value || "164";
+        const addressBuilding = addressBuildingInput?.value || "3";
+        const deliveryAddressIndex = deliveryAddressIndexInput?.value || "420111";
+        const deliveryAddressRegion = deliveryAddressRegionInput?.value || "03";
+        const cargoValue = cargoValueInput?.value || "120000";
+        const loadMethod = loadMethodInput?.value || "02";
         
         // Проверка обязательных полей
         if (!shipper.name) throw new Error("Выберите грузоотправителя");
@@ -626,87 +648,225 @@ function generateXML() {
         
         // Форматирование дат
         const formattedShipmentDate = formatDateForXML(shipmentDate);
-        const nowDate = new Date().toISOString().slice(0, 10);
-        const idGuid = generateGuid();
+        const formattedContractDate = formatDateForXML(contractDate);
+        const now = new Date();
+        const nowDate = `${now.getDate().toString().padStart(2, '0')}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getFullYear()}`;
+        const nowTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
         
-        // Генерация XML по формату ФНС (Приказ № ЕД-7-26/383@)
-        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-        xml += `<ON_TRNVPRGO xmlns="http://www.nalog.ru/EDO/TTN/TransportationCustomer/033/..." xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ИдОтпр="${idGuid}" ВерсПрог="5.03">\n`;
-        xml += `    <КНД>1110430</КНД>\n`;
-        xml += `    <НаимТрН>3</НаимТрН>\n`;
-        xml += `    <ДатаСостав>${nowDate}</ДатаСостав>\n`;
-        xml += `    <НомерТТН>${escapeXml(ttnNumber)}</НомерТТН>\n`;
-        xml += `    <СвГрузоотпр>\n`;
-        xml += `        <ИНН>${escapeXml(shipper.inn || '')}</ИНН>\n`;
-        xml += `        <КПП>${escapeXml(shipper.kpp || '')}</КПП>\n`;
-        xml += `        <НазваниеОрг>${escapeXml(shipper.name)}</НазваниеОрг>\n`;
-        xml += `        <Адрес>${escapeXml(shipper.address || '')}</Адрес>\n`;
-        xml += `        <Тлф>${escapeXml(shipper.phone || '')}</Тлф>\n`;
-        xml += `    </СвГрузоотпр>\n`;
-        xml += `    <СвГрузополуч>\n`;
-        xml += `        <ИНН>${escapeXml(consignee.inn || '')}</ИНН>\n`;
-        xml += `        <КПП>${escapeXml(consignee.kpp || '')}</КПП>\n`;
-        xml += `        <НазваниеОрг>${escapeXml(consignee.name)}</НазваниеОрг>\n`;
-        xml += `        <Адрес>${escapeXml(consignee.address || '')}</Адрес>\n`;
-        xml += `        <Тлф>${escapeXml(consignee.phone || '')}</Тлф>\n`;
-        xml += `    </СвГрузополуч>\n`;
-        xml += `    <СвПеревозч>\n`;
-        xml += `        <ИНН>${escapeXml(carrier.inn || '')}</ИНН>\n`;
-        xml += `        <КПП>${escapeXml(carrier.kpp || '')}</КПП>\n`;
-        xml += `        <НазваниеОрг>${escapeXml(carrier.name)}</НазваниеОрг>\n`;
-        xml += `        <ВидТранс>${escapeXml(carrier.transportType || 'Автомобильный')}</ВидТранс>\n`;
-        xml += `        <Адрес>${escapeXml(carrier.address || '')}</Адрес>\n`;
-        xml += `        <Тлф>${escapeXml(carrier.phone || '')}</Тлф>\n`;
-        xml += `    </СвПеревозч>\n`;
-        xml += `    <ТранспСр>\n`;
-        xml += `        <РегНомерТС>${escapeXml(vehicle.regNumber || '')}</РегНомерТС>\n`;
-        xml += `        <НацТС>${escapeXml(vehicle.nationality || 'RUS')}</НацТС>\n`;
-        xml += `        <СведВод>\n`;
-        xml += `            <ФИОВод>${escapeXml(driver.fullName || '')}</ФИОВод>\n`;
-        xml += `            <НомВодУдост>${escapeXml(driver.license || '')}</НомВодУдост>\n`;
-        xml += `            <ТлфВод>${escapeXml(driver.phone || '')}</ТлфВод>\n`;
-        xml += `        </СведВод>\n`;
-        xml += `    </ТранспСр>\n`;
-        xml += `    <СведПер>\n`;
-        xml += `        <НаимПунктОтпр>${escapeXml(shipPoint)}</НаимПунктОтпр>\n`;
-        xml += `        <ДатаОтгр>${formattedShipmentDate}</ДатаОтгр>\n`;
-        xml += `    </СведПер>\n`;
-        xml += `    <ТовРаздел>\n`;
+        // Генерация ID файла
+        const guid1 = generateGuid();
+        const guid2 = generateGuid();
+        const guid3 = generateGuid();
+        const dateForFile = `${now.getDate().toString().padStart(2, '0')}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getFullYear()}`;
+        const fileId = `ON_TRNVPRGO_${guid1}_${guid2}_0_${dateForFile}_${guid3}`;
         
+        // Время для погрузки
+        const nowTimeISO = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}T${nowTime}+03:00`;
+        
+        // Разбиваем ФИО водителя
+        const driverNameParts = (driver.fullName || '').split(' ');
+        const driverLastName = driverNameParts[0] || '';
+        const driverFirstName = driverNameParts[1] || '';
+        
+        // Разбиваем ФИО подписанта
+        const signerNameParts = (signer.fio || '').split(' ');
+        const signerLastName = signerNameParts[0] || '';
+        const signerFirstName = signerNameParts[1] || '';
+        const signerPatronymic = signerNameParts[2] || '';
+        
+        // Формируем регионы
+        const shipperRegionName = addressRegion === '77' ? 'г. Москва' : '';
+        const deliveryRegionName = deliveryAddressRegion === '03' ? 'Республика Башкортостан' : '';
+        
+        // Генерация XML по образцу
+        let xml = `<?xml version="1.0" encoding="windows-1251"?>\n`;
+        xml += `<Файл xmlns="http://www.nalog.ru/EDO/TTN/TransportationCustomer/033/..." \n`;
+        xml += `      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n`;
+        xml += `      ИдФайл="${escapeXml(fileId)}"\n`;
+        xml += `      ВерсПрог="ЭТРН.ONLINE V 1.01"\n`;
+        xml += `      ВерсФорм="5.01">\n`;
+        xml += `    <Документ КНД="1110430" \n`;
+        xml += `              НаимТрН="3" \n`;
+        xml += `              ДатаИнфГО="${nowDate}" \n`;
+        xml += `              ВрИнфГО="${nowTime}">\n`;
+        xml += `        <СодИнфГО СодОпер="Лицом, осуществляющим погрузку груза, при указанных обстоятельствах передан водителю груз с указанными характеристиками" \n`;
+        xml += `                  НомерТрН="${escapeXml(ttnNumber)}" \n`;
+        xml += `                  ДатаТрН="${formattedShipmentDate}" \n`;
+        xml += `                  НомЗак="${escapeXml(contractNumber)}" \n`;
+        xml += `                  ДатаЗак="${formattedContractDate}">\n`;
+        xml += `            \n`;
+        xml += `            <!-- Сведения о грузоотправителе -->\n`;
+        xml += `            <СвГО>\n`;
+        xml += `                <РеквГО>\n`;
+        xml += `                    <ИдСв>\n`;
+        xml += `                        <СвЮЛУч>\n`;
+        xml += `                            <НаимОрг>${escapeXml(shipper.name)}</НаимОрг>\n`;
+        xml += `                            <ИННЮЛ>${escapeXml(shipper.inn || '')}</ИННЮЛ>\n`;
+        xml += `                            <КПП>${escapeXml(shipper.kpp || '')}</КПП>\n`;
+        xml += `                        </СвЮЛУч>\n`;
+        xml += `                    </ИдСв>\n`;
+        xml += `                    <Адрес>\n`;
+        xml += `                        <АдрРФ>\n`;
+        xml += `                            <Индекс>${escapeXml(addressIndex)}</Индекс>\n`;
+        xml += `                            <КодРегион>${escapeXml(addressRegion)}</КодРегион>\n`;
+        if (shipperRegionName) xml += `                            <НаимРегион>${escapeXml(shipperRegionName)}</НаимРегион>\n`;
+        xml += `                            <Улица>${escapeXml(addressStreet)}</Улица>\n`;
+        xml += `                            <Дом>${escapeXml(addressHouse)}</Дом>\n`;
+        xml += `                            <Корпус>${escapeXml(addressBuilding)}</Корпус>\n`;
+        xml += `                        </АдрРФ>\n`;
+        xml += `                    </Адрес>\n`;
+        xml += `                    <Контакт>\n`;
+        xml += `                        <Тлф>${escapeXml(shipper.phone || '')}</Тлф>\n`;
+        xml += `                    </Контакт>\n`;
+        xml += `                </РеквГО>\n`;
+        xml += `            </СвГО>\n`;
+        xml += `\n`;
+        xml += `            <!-- Сведения о грузополучателе -->\n`;
+        xml += `            <СвГП>\n`;
+        xml += `                <РеквГП>\n`;
+        xml += `                    <ИдСв>\n`;
+        xml += `                        <СвЮЛУч>\n`;
+        xml += `                            <НаимОрг>${escapeXml(consignee.name)}</НаимОрг>\n`;
+        xml += `                            <ИННЮЛ>${escapeXml(consignee.inn || '')}</ИННЮЛ>\n`;
+        xml += `                            <КПП>${escapeXml(consignee.kpp || '')}</КПП>\n`;
+        xml += `                        </СвЮЛУч>\n`;
+        xml += `                    </ИдСв>\n`;
+        xml += `                    <Контакт>\n`;
+        xml += `                        <Тлф>${escapeXml(consignee.phone || '')}</Тлф>\n`;
+        xml += `                    </Контакт>\n`;
+        xml += `                </РеквГП>\n`;
+        xml += `                <АдресДост>\n`;
+        xml += `                    <АдрРФ>\n`;
+        xml += `                        <Индекс>${escapeXml(deliveryAddressIndex)}</Индекс>\n`;
+        xml += `                        <КодРегион>${escapeXml(deliveryAddressRegion)}</КодРегион>\n`;
+        if (deliveryRegionName) xml += `                        <НаимРегион>${escapeXml(deliveryRegionName)}</НаимРегион>\n`;
+        xml += `                        <Улица>${escapeXml(addressStreet)}</Улица>\n`;
+        xml += `                        <Дом>1</Дом>\n`;
+        xml += `                    </АдрРФ>\n`;
+        xml += `                </АдресДост>\n`;
+        xml += `            </СвГП>\n`;
+        xml += `\n`;
+        
+        // Для каждого отсека добавляем СвГруз
         for (let i = 0; i < compartmentsData.length; i++) {
             const cargo = compartmentsData[i];
-            xml += `        <Товар>\n`;
-            xml += `            <НаимТов>${escapeXml(cargo.productName)}</НаимТов>\n`;
-            xml += `            <КодТовТНВЭД>${escapeXml(cargo.tnved)}</КодТовТНВЭД>\n`;
-            xml += `            <КолТов>\n`;
-            xml += `                <КолТовФакт>${cargo.weight}</КолТовФакт>\n`;
-            xml += `                <ОКЕИ>168</ОКЕИ>\n`;
-            xml += `            </КолТов>\n`;
-            xml += `            <ФизХимПок>\n`;
-            xml += `                <Показ>\n`;
-            xml += `                    <НаимПоказ>Плотность при 15°C</НаимПоказ>\n`;
-            xml += `                    <ЗначПоказ>${cargo.density}</ЗначПоказ>\n`;
-            xml += `                    <ЕдПоказ>кг/м³</ЕдПоказ>\n`;
-            xml += `                </Показ>\n`;
-            xml += `                <Показ>\n`;
-            xml += `                    <НаимПоказ>Температура налива</НаимПоказ>\n`;
-            xml += `                    <ЗначПоказ>${cargo.temp}</ЗначПоказ>\n`;
-            xml += `                    <ЕдПоказ>°C</ЕдПоказ>\n`;
-            xml += `                </Показ>\n`;
-            xml += `            </ФизХимПок>\n`;
-            xml += `            <КолГрузМест>${cargo.places}</КолГрузМест>\n`;
-            xml += `        </Товар>\n`;
+            xml += `            <!-- Сведения о грузе -->\n`;
+            xml += `            <СвГруз>\n`;
+            xml += `                <ОпГруз НаимГруз="${escapeXml(cargo.productName)}" \n`;
+            xml += `                        СостГруз="Без нареканий" \n`;
+            xml += `                        СпУпак="0" \n`;
+            xml += `                        ВидТар="00" \n`;
+            xml += `                        КолМестГр="${cargo.places}">\n`;
+            xml += `                    <Марк>Отсутствует</Марк>\n`;
+            xml += `                    <ВесГруз>${cargo.weight}</ВесГруз>\n`;
+            xml += `                    <ЦенГруз>\n`;
+            xml += `                        <СтЦенГр>${escapeXml(cargoValue)}</СтЦенГр>\n`;
+            xml += `                        <КодОКВ>643</КодОКВ>\n`;
+            xml += `                        <НаимОКВ>Российский рубль</НаимОКВ>\n`;
+            xml += `                    </ЦенГруз>\n`;
+            xml += `                </ОпГруз>\n`;
+            xml += `                <ФизХимПок>\n`;
+            xml += `                    <Показ>\n`;
+            xml += `                        <НаимПоказ>Плотность при 15°C</НаимПоказ>\n`;
+            xml += `                        <ЗначПоказ>${cargo.density}</ЗначПоказ>\n`;
+            xml += `                        <ЕдПоказ>кг/м³</ЕдПоказ>\n`;
+            xml += `                    </Показ>\n`;
+            xml += `                    <Показ>\n`;
+            xml += `                        <НаимПоказ>Температура налива</НаимПоказ>\n`;
+            xml += `                        <ЗначПоказ>${cargo.temp}</ЗначПоказ>\n`;
+            xml += `                        <ЕдПоказ>°C</ЕдПоказ>\n`;
+            xml += `                    </Показ>\n`;
+            xml += `                </ФизХимПок>\n`;
+            xml += `            </СвГруз>\n`;
+            xml += `\n`;
         }
         
-        xml += `    </ТовРаздел>\n`;
-        xml += `    <Подписант>\n`;
-        xml += `        <ФИО>${escapeXml(signer.fio || '')}</ФИО>\n`;
-        xml += `        <Должность>${escapeXml(signer.position || '')}</Должность>\n`;
-        xml += `    </Подписант>\n`;
-        xml += `</ON_TRNVPRGO>`;
+        xml += `            <!-- Указания грузоотправителя -->\n`;
+        xml += `            <УказГО УкНормПрвз="Отсутствуют">\n`;
+        xml += `                <СвПА ЛицоПА="Грузоотправитель" \n`;
+        xml += `                      СпосПерУкПА="Электронное уведомление перевозчика о переадресовке">\n`;
+        xml += `                    <КонтПА>\n`;
+        xml += `                        <Тлф>${escapeXml(shipper.phone || '')}</Тлф>\n`;
+        xml += `                    </КонтПА>\n`;
+        xml += `                </СвПА>\n`;
+        xml += `            </УказГО>\n`;
+        xml += `\n`;
+        xml += `            <!-- Сведения о перевозчике -->\n`;
+        xml += `            <СвПер>\n`;
+        xml += `                <ИдСв>\n`;
+        xml += `                    <СвЮЛУч>\n`;
+        xml += `                        <НаимОрг>${escapeXml(carrier.name)}</НаимОрг>\n`;
+        xml += `                        <ИННЮЛ>${escapeXml(carrier.inn || '')}</ИННЮЛ>\n`;
+        xml += `                        <КПП>${escapeXml(carrier.kpp || '')}</КПП>\n`;
+        xml += `                    </СвЮЛУч>\n`;
+        xml += `                </ИдСв>\n`;
+        xml += `                <Адрес>\n`;
+        xml += `                    <АдрРФ>\n`;
+        xml += `                        <Индекс>${escapeXml(addressIndex)}</Индекс>\n`;
+        xml += `                        <КодРегион>${escapeXml(addressRegion)}</КодРегион>\n`;
+        if (shipperRegionName) xml += `                        <НаимРегион>${escapeXml(shipperRegionName)}</НаимРегион>\n`;
+        xml += `                    </АдрРФ>\n`;
+        xml += `                </Адрес>\n`;
+        xml += `                <Контакт>\n`;
+        xml += `                    <Тлф>${escapeXml(carrier.phone || '')}</Тлф>\n`;
+        xml += `                </Контакт>\n`;
+        xml += `            </СвПер>\n`;
+        xml += `\n`;
+        xml += `            <!-- Сведения о водителе -->\n`;
+        xml += `            <СвВод ИННФЛ="${escapeXml(driver.inn || '')}">\n`;
+        xml += `                <Тлф>${escapeXml(driver.phone || '')}</Тлф>\n`;
+        xml += `                <ФИО>\n`;
+        xml += `                    <Фамилия>${escapeXml(driverLastName)}</Фамилия>\n`;
+        xml += `                    <Имя>${escapeXml(driverFirstName)}</Имя>\n`;
+        xml += `                </ФИО>\n`;
+        xml += `            </СвВод>\n`;
+        xml += `\n`;
+        xml += `            <!-- Сведения о транспортном средстве -->\n`;
+        xml += `            <СвТС>\n`;
+        xml += `                <ТС РегНомер="${escapeXml(vehicle.regNumber || '')}" ТипВлад="1">\n`;
+        xml += `                    <ПарТС Тип="${escapeXml(vehicle.brand || '')}" Марка="${escapeXml(vehicle.brand || '')}" Грузопод="${escapeXml(vehicle.loadCapacity || '20000')}" Вместим="${escapeXml(vehicle.capacity || '20000')}" />\n`;
+        xml += `                </ТС>\n`;
+        xml += `            </СвТС>\n`;
+        xml += `\n`;
+        xml += `            <!-- Сведения о погрузке -->\n`;
+        xml += `            <СвПогруз ЗаявПогр="${nowTimeISO}" \n`;
+        xml += `                      НалКоорТочВрЗаяв="0" \n`;
+        xml += `                      ФДатВрПриб="${nowTimeISO}" \n`;
+        xml += `                      НалКоорТочВрФПогр="0" \n`;
+        xml += `                      ФДатВрУбыт="${nowTimeISO}" \n`;
+        xml += `                      НалКоорТочВрФУбыт="0" \n`;
+        xml += `                      МасБрутОтрг="${totalWeight.toFixed(3)}" \n`;
+        xml += `                      МетОпМасс="${escapeXml(loadMethod)}" \n`;
+        xml += `                      КолМестПрием="${totalPlaces}">\n`;
+        xml += `                <ФАдресПогр>\n`;
+        xml += `                    <АдрРФ>\n`;
+        xml += `                        <Индекс>${escapeXml(addressIndex)}</Индекс>\n`;
+        xml += `                        <КодРегион>${escapeXml(addressRegion)}</КодРегион>\n`;
+        xml += `                        <Улица>${escapeXml(addressStreet)}</Улица>\n`;
+        xml += `                        <Дом>${escapeXml(addressHouse)}</Дом>\n`;
+        xml += `                        <Корпус>${escapeXml(addressBuilding)}</Корпус>\n`;
+        xml += `                    </АдрРФ>\n`;
+        xml += `                </ФАдресПогр>\n`;
+        xml += `                <СвЛицПогрГр СовпГОП="1">\n`;
+        xml += `                    <ИдРекГО>\n`;
+        xml += `                        <ИННЮЛ>${escapeXml(shipper.inn || '')}</ИННЮЛ>\n`;
+        xml += `                    </ИдРекГО>\n`;
+        xml += `                </СвЛицПогрГр>\n`;
+        xml += `                <ВладИнфра СовпГОВ="3" ОбНетИнфОВлад="Нет данных" />\n`;
+        xml += `            </СвПогруз>\n`;
+        xml += `        </СодИнфГО>\n`;
+        xml += `        <Подписант СтатПод="1">\n`;
+        xml += `            <ФИО>\n`;
+        xml += `                <Фамилия>${escapeXml(signerLastName)}</Фамилия>\n`;
+        xml += `                <Имя>${escapeXml(signerFirstName)}</Имя>\n`;
+        if (signerPatronymic) xml += `                <Отчество>${escapeXml(signerPatronymic)}</Отчество>\n`;
+        xml += `            </ФИО>\n`;
+        xml += `        </Подписант>\n`;
+        xml += `    </Документ>\n`;
+        xml += `</Файл>`;
         
         if (xmlPreview) xmlPreview.innerText = xml;
-        if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> XML успешно сформирован по формату ФНС (Приказ № ЕД-7-26/383@)';
+        if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> XML успешно сформирован по формату ФНС';
         return xml;
     } catch(e) {
         if (statusMsg) statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка: ${e.message}`;

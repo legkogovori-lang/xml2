@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тарифы и подключение — ЭТРН.ONLINE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #e8f0f5 0%, #d4e2ec 100%);
+            min-height: 100vh;
+            color: #1a3d52;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 32px;
+            margin: 24px 32px 40px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo i {
+            font-size: 1.8rem;
+            color: #2c7ab1;
+        }
+
+        .logo span {
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: #1a4d6b;
+        }
+
+        .logo .logo-accent {
+            color: #2c7ab1;
+        }
+
+        .logo small {
+            font-size: 0.7rem;
+            font-weight: 400;
+            color: #5a7c94;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.5);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #2c7ab1;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-btn:hover {
+            background: rgba(44, 122, 177, 0.2);
+            transform: translateX(-3px);
+        }
+
+        .tariffs-section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .section-title h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1a4d6b;
+            margin-bottom: 12px;
+        }
+
+        .section-title p {
+            color: #5a7c94;
+            font-size: 1rem;
+        }
+
+        .tariffs-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .tariff-card {
+            padding: 32px 28px;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tariff-card:hover {
+            transform: translateY(-8px);
+            border-color: #2c7ab1;
+            box-shadow: 0 20px 40px rgba(44, 122, 177, 0.2);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .tariff-card.popular {
+            border: 2px solid #2c7ab1;
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: linear-gradient(135deg, #2c7ab1, #1a5d85);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 40px;
+        }
+
+        .tariff-icon {
+            width: 70px;
+            height: 70px;
+            background: rgba(44, 122, 177, 0.1);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .tariff-icon i {
+            font-size: 2rem;
+            color: #2c7ab1;
+        }
+
+        .tariff-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a4d6b;
+            margin-bottom: 8px;
+        }
+
+        .tariff-price {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #1a5d85;
+            margin: 16px 0 8px;
+        }
+
+        .tariff-price small {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: #6a8aa3;
+        }
+
+        .tariff-period {
+            font-size: 0.8rem;
+            color: #6a8aa3;
+            margin-bottom: 20px;
+        }
+
+        .tariff-features {
+            list-style: none;
+            text-align: left;
+            margin: 24px 0;
+            padding: 0;
+        }
+
+        .tariff-features li {
+            padding: 8px 0;
+            font-size: 0.85rem;
+            color: #4a6f8a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .tariff-features li:last-child {
+            border-bottom: none;
+        }
+
+        .tariff-features li i {
+            color: #2c7ab1;
+            width: 20px;
+            font-size: 0.85rem;
+        }
+
+        .btn-tariff {
+            width: 100%;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #2c7ab1, #1a5d85);
+            color: white;
+            margin-top: 16px;
+        }
+
+        .btn-tariff:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(44, 122, 177, 0.4);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .info-card {
+            padding: 28px 24px;
+            transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(44, 122, 177, 0.3);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .info-card i {
+            font-size: 2rem;
+            color: #2c7ab1;
+            margin-bottom: 16px;
+            display: inline-block;
+        }
+
+        .info-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a4d6b;
+            margin-bottom: 12px;
+        }
+
+        .info-card p, .info-card address {
+            font-size: 0.85rem;
+            color: #4a6f8a;
+            line-height: 1.5;
+            font-style: normal;
+        }
+
+        .info-card address a {
+            color: #2c7ab1;
+            text-decoration: none;
+        }
+
+        .info-card address a:hover {
+            text-decoration: underline;
+        }
+
+        .offer-section {
+            margin: 40px 0;
+        }
+
+        .offer-card {
+            padding: 32px;
+        }
+
+        .offer-card h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1a4d6b;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .offer-card h3 i {
+            color: #2c7ab1;
+        }
+
+        .offer-text {
+            font-size: 0.8rem;
+            color: #4a6f8a;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .offer-text p {
+            margin-bottom: 12px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 32px;
+            margin: 24px 32px;
+            font-size: 0.75rem;
+            color: #6a8aa3;
+        }
+
+        .footer a {
+            color: #2c7ab1;
+            text-decoration: none;
+        }
+
+        /* Модальное окно */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 28px;
+            width: 90%;
+            max-width: 500px;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .modal-content i {
+            font-size: 3rem;
+            color: #2c7ab1;
+            margin-bottom: 16px;
+        }
+
+        .modal-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+        }
+
+        .modal-content .close-btn {
+            margin-top: 20px;
+            padding: 10px 24px;
+            background: #2c7ab1;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+		
+		
+
+		.btn-cancel {
+			margin-top: 12px;
+			background: rgba(255, 255, 255, 0.6);
+			border: 1px solid rgba(44, 122, 177, 0.3);
+			color: #1a5d85;
+			padding: 10px 20px;
+			border-radius: 40px;
+			font-weight: 500;
+			font-size: 0.85rem;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			font-family: 'Inter', sans-serif;
+			width: 100%;
+			max-width: 200px;
+		}
+
+		.btn-cancel:hover {
+			background: rgba(200, 70, 70, 0.1);
+			border-color: #c04444;
+			color: #c04444;
+			transform: translateY(-2px);
+		}
+
+        @media (max-width: 900px) {
+            .tariffs-grid, .info-grid {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                margin: 16px;
+                padding: 16px;
+                flex-direction: column;
+                gap: 16px;
+            }
+            .section-title h1 {
+                font-size: 1.6rem;
+            }
+        }
+		
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate {
+            animation: fadeIn 0.6s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <header class="header glass">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <button class="back-btn" id="backBtn" title="Назад">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="logo">
+                <i class="fas fa-file-alt"></i>
+                <span>этрн.<span class="logo-accent">online</span></span>
+                <small>Тарифы и подключение</small>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Тарифы -->
+        <div class="tariffs-section animate">
+            <div class="section-title">
+                <h1>Выберите тариф</h1>
+                <p>Полный доступ к сервису формирования ЭТрН без ограничений</p>
+            </div>
+            <div class="tariffs-grid">
+                <!-- Тариф 1 месяц -->
+                <div class="tariff-card glass" data-price="250" data-period="month">
+                    <div class="tariff-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3>Базовый</h3>
+                    <div class="tariff-price">250 ₽</div>
+                    <div class="tariff-period">за 1 месяц использования</div>
+                    <ul class="tariff-features">
+                        <li><i class="fas fa-check-circle"></i> Неограниченное количество контрагентов</li>
+                        <li><i class="fas fa-check-circle"></i> База данных на IndexedDB</li>
+                        <li><i class="fas fa-check-circle"></i> Экспорт/импорт справочников</li>
+                        
+                        <li><i class="fas fa-check-circle"></i> XML в формате ФНС v5.01</li>
+                    </ul>
+                    <button class="btn-tariff" data-price="250" data-period="month">
+                        <i class="fas fa-shopping-cart"></i> Оплатить 250 ₽
+                    </button>
+                </div>
+
+                <!-- Тариф 6 месяцев -->
+                <div class="tariff-card glass popular" data-price="1000" data-period="halfyear">
+                    <div class="popular-badge">
+                        <i class="fas fa-star"></i> 
+                    </div>
+                    <div class="tariff-icon">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                    <h3>Оптимальный</h3>
+                    <div class="tariff-price">1 000 ₽</div>
+                    <div class="tariff-period">за 6 месяцев использования</div>
+                    <ul class="tariff-features">
+                        <li><i class="fas fa-check-circle"></i> Неограниченное количество контрагентов</li>
+                        <li><i class="fas fa-check-circle"></i> База данных на IndexedDB</li>
+                        <li><i class="fas fa-check-circle"></i> Экспорт/импорт справочников</li>
+                        
+                        <li><i class="fas fa-check-circle"></i> XML в формате ФНС v5.01</li>
+                        
+                    </ul>
+                    <button class="btn-tariff" data-price="1000" data-period="halfyear">
+                        <i class="fas fa-shopping-cart"></i> Оплатить 1 000 ₽
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Реквизиты самозанятого -->
+        <div class="info-grid animate">
+            <div class="info-card glass">
+                <i class="fas fa-user-check"></i>
+                <h3>Сведения о самозанятом</h3>
+                <p>
+                    <strong>Тараскин А.В.</strong><br>
+                    Статус: плательщик НПД<br>
+                    ИНН: 631180703984<br>
+                    
+                    Регистрация: г. Самара
+                </p>
+            </div>
+			
+			<div class="info-card glass">
+                <i class="fas fa-university"></i>
+                <h3></h3>
+                
+            </div>
+            
+            <div class="info-card glass">
+                <i class="fas fa-phone-alt"></i>
+                <h3>Контактные данные</h3>
+                <p>
+                    <i class="fas fa-envelope"></i> xmlgenerator@yandex.ru<br>
+                    
+                    
+                </p>
+            </div>
+        </div>
+
+        <!-- Договор-оферта для самозанятого -->
+        <div class="offer-section animate">
+            <div class="offer-card glass">
+                <h3><i class="fas fa-file-contract"></i> Договор-оферта для физических лиц</h3>
+                <div class="offer-text">
+                    <p>Настоящий документ является публичной офертой в соответствии со ст. 437 ГК РФ. Оплачивая услугу, вы соглашаетесь с условиями предоставления доступа к сервису «ЭТРН.ONLINE».</p>
+                    <p><strong>Услуга:</strong> предоставление доступа к веб-приложению для формирования XML-файлов электронных транспортных накладных (ЭТрН) в формате ФНС России.</p>
+                    <p><strong>Срок действия доступа:</strong> 30 календарных дней (тариф «Базовый») или 180 календарных дней (тариф «Оптимальный») с момента подтверждения оплаты.</p>
+                </div>
+
+                <h3 style="margin-top: 24px;"><i class="fas fa-undo-alt"></i> Порядок возврата денежных средств</h3>
+                <div class="offer-text">
+                    <p>В соответствии с Законом РФ «О защите прав потребителей» № 2300-1, вы имеете право отказаться от услуги в любое время до момента первого использования сервиса (до генерации первого XML-файла). Для оформления возврата необходимо направить заявление на электронную почту <a href="mailto:ivanov@etrn.online">ivanov@etrn.online</a> с указанием номера платежа.</p>
+                    <p>Возврат осуществляется в течение 14 рабочих дней на тот же счёт, с которого производилась оплата. После активации доступа и начала использования сервиса возврат не производится, так как услуга считается оказанной в полном объёме.</p>
+                </div>
+
+                <h3 style="margin-top: 24px;"><i class="fas fa-laptop"></i> Условия предоставления доступа</h3>
+                <div class="offer-text">
+                    <p>Доступ предоставляется после поступления денежных средств на указанный расчётный счёт. Уведомление об активации доступа отправляется на электронную почту, указанную при оплате, в течение 5 минут после подтверждения платежа.</p>
+                    <p>Сервис предоставляется «как есть» (as is). Владелец сервиса не несёт ответственности за возможные убытки, связанные с использованием или невозможностью использования сервиса.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer glass">
+        <p>© 2026 этрн.online | Формирователь XML для ЭТрН · Титул Т1 · Версия 1.01</p>
+        <p style="margin-top: 8px; font-size: 0.7rem;">
+            Тараскин А.В. · ИНН 631180703984
+        </p>
+    </footer>
+
+    <!-- Модальное окно для оплаты -->
+    <div id="paymentModal" class="modal-overlay">
+        <div class="modal-content">
+            <i class="fas fa-credit-card"></i>
+            <h3>Оплата через Робокассу</h3>
+            <p id="modalAmountText">Сумма к оплате: 250 ₽</p>
+            <p style="margin: 16px 0; font-size: 0.85rem;">Вы будете перенаправлены на защищённую страницу платёжной системы</p>
+            <button class="close-btn" id="confirmPaymentBtn">Перейти к оплате →</button>
+            <button class="close-btn"  style="margin-top: 12px; background: transparent; color: #666;" id="cancelPaymentBtn">Отмена</button>
+        </div>
+    </div>
+
+    <script>
+        // Кнопка назад
+        const backBtn = document.getElementById('backBtn');
+        backBtn.addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+
+        // Реквизиты для Robokassa (замените на свои!)
+        const ROBOKASSA_CONFIG = {
+            merchantLogin: 'etrn.online',        // Ваш логин в Robokassa
+            merchantPass1: 'your_pass1_here',    // Pass 1 (для формирования подписи)
+            merchantPass2: 'your_pass2_here',    // Pass 2 (для подтверждения)
+            isTest: 0                             // 0 - боевой режим, 1 - тестовый
+        };
+
+        // Генерация InvId
+        function generateInvId() {
+            return Math.floor(Math.random() * 1000000000);
+        }
+
+        // Формирование подписи MD5 для Robokassa
+        function md5(string) {
+            // Простая имитация MD5 (в реальности используйте библиотеку или CryptoJS)
+            // Для рабочей интеграции нужно подключить crypto-js
+            // Я покажу полный вариант с crypto-js
+            return string;
+        }
+
+        // Форма Robokassa
+        function createRobokassaForm(amount, invId, description, email) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'https://auth.robokassa.ru/Merchant/Index.aspx';
+            form.target = '_blank';
+            
+            const fields = {
+                'MerchantLogin': ROBOKASSA_CONFIG.merchantLogin,
+                'OutSum': amount,
+                'InvId': invId,
+                'Description': description,
+                'Culture': 'ru',
+                'Encoding': 'utf-8',
+                'IsTest': ROBOKASSA_CONFIG.isTest
+            };
+            
+            // Добавляем email если есть
+            if (email) {
+                fields['Email'] = email;
+            }
+            
+            // Формируем подпись: MerchantLogin:OutSum:InvId:MerchantPass1
+            const signatureString = `${ROBOKASSA_CONFIG.merchantLogin}:${amount}:${invId}:${ROBOKASSA_CONFIG.merchantPass1}`;
+            const signature = CryptoJS.MD5(signatureString).toString().toUpperCase();
+            fields['SignatureValue'] = signature;
+            
+            for (const [key, value] of Object.entries(fields)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            }
+            
+            document.body.appendChild(form);
+            return form;
+        }
+
+        // Подключаем CryptoJS для MD5
+        const cryptoScript = document.createElement('script');
+        cryptoScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js';
+        document.head.appendChild(cryptoScript);
+        
+        let pendingAmount = 0;
+        let pendingPeriod = '';
+        let pendingInvId = '';
+        
+        // Обработчики кнопок тарифов
+        const tariffButtons = document.querySelectorAll('.btn-tariff');
+        const paymentModal = document.getElementById('paymentModal');
+        const modalAmountText = document.getElementById('modalAmountText');
+        const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+        const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
+        
+        tariffButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const price = btn.dataset.price;
+                const period = btn.dataset.period;
+                const amountText = period === 'month' ? '250 ₽ (1 месяц)' : '1 000 ₽ (6 месяцев)';
+                
+                pendingAmount = price;
+                pendingPeriod = period;
+                pendingInvId = generateInvId();
+                
+                modalAmountText.innerHTML = `Сумма к оплате: ${price} ₽<br><small style="font-size: 0.7rem;">${period === 'month' ? 'Доступ на 1 месяц' : 'Доступ на 6 месяцев'}</small>`;
+                paymentModal.style.display = 'flex';
+            });
+        });
+        
+        // Подтверждение оплаты
+        confirmPaymentBtn.addEventListener('click', async () => {
+            paymentModal.style.display = 'none';
+            
+            const email = prompt('Укажите ваш email для получения доступа и чека:', 'client@example.com');
+            if (!email) {
+                alert('Email обязателен для активации доступа');
+                return;
+            }
+            
+            const description = pendingPeriod === 'month' 
+                ? 'Оплата доступа к ЭТРН.ONLINE на 1 месяц' 
+                : 'Оплата доступа к ЭТРН.ONLINE на 6 месяцев';
+            
+            // Ждём загрузки CryptoJS
+            const waitForCrypto = setInterval(() => {
+                if (typeof CryptoJS !== 'undefined') {
+                    clearInterval(waitForCrypto);
+                    
+                    // Создаём форму с правильной подписью
+                    const signatureString = `${ROBOKASSA_CONFIG.merchantLogin}:${pendingAmount}:${pendingInvId}:${ROBOKASSA_CONFIG.merchantPass1}`;
+                    const signature = CryptoJS.MD5(signatureString).toString().toUpperCase();
+                    
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = 'https://auth.robokassa.ru/Merchant/Index.aspx';
+                    form.target = '_blank';
+                    
+                    const fields = {
+                        'MerchantLogin': ROBOKASSA_CONFIG.merchantLogin,
+                        'OutSum': pendingAmount,
+                        'InvId': pendingInvId,
+                        'Description': description,
+                        'Culture': 'ru',
+                        'Encoding': 'utf-8',
+                        'IsTest': ROBOKASSA_CONFIG.isTest,
+                        'Email': email,
+                        'SignatureValue': signature
+                    };
+                    
+                    for (const [key, value] of Object.entries(fields)) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = key;
+                        input.value = value;
+                        form.appendChild(input);
+                    }
+                    
+                    document.body.appendChild(form);
+                    
+                    // Сохраняем информацию об ожидании оплаты
+                    const pendingPayment = {
+                        invId: pendingInvId,
+                        amount: pendingAmount,
+                        period: pendingPeriod,
+                        email: email,
+                        date: new Date().toISOString()
+                    };
+                    localStorage.setItem('etrn_pending_payment', JSON.stringify(pendingPayment));
+                    
+                    form.submit();
+                    
+                    // Закрываем модальное окно и показываем инструкцию
+                    setTimeout(() => {
+                        alert('Оплата в процессе. После завершения платежа вернитесь на сайт — доступ будет активирован автоматически.\n\nЕсли доступ не активировался в течение 5 минут, свяжитесь с поддержкой.');
+                    }, 500);
+                }
+            }, 100);
+            
+            // Таймаут на случай ошибки загрузки
+            setTimeout(() => {
+                clearInterval(waitForCrypto);
+                if (typeof CryptoJS === 'undefined') {
+                    // Ручной переход, если библиотека не загрузилась
+                    window.location.href = `https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=${ROBOKASSA_CONFIG.merchantLogin}&OutSum=${pendingAmount}&InvId=${pendingInvId}&Description=${encodeURIComponent(description)}&Culture=ru&Encoding=utf-8&IsTest=${ROBOKASSA_CONFIG.isTest}&Email=${email}`;
+                }
+            }, 3000);
+        });
+        
+        // Отмена оплаты
+        cancelPaymentBtn.addEventListener('click', () => {
+            paymentModal.style.display = 'none';
+        });
+        
+        // Закрытие модального окна по клику на фон
+        paymentModal.addEventListener('click', (e) => {
+            if (e.target === paymentModal) {
+                paymentModal.style.display = 'none';
+            }
+        });
+
+        // Проверяем возврат с оплаты (Result URL)
+        function checkPaymentResult() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const invId = urlParams.get('InvId');
+            const outSum = urlParams.get('OutSum');
+            const signatureValue = urlParams.get('SignatureValue');
+            
+            if (invId && outSum && signatureValue) {
+                // Проверяем подпись
+                const checkString = `${outSum}:${invId}:${ROBOKASSA_CONFIG.merchantPass2}`;
+                const expectedSignature = CryptoJS.MD5(checkString).toString().toUpperCase();
+                
+                if (signatureValue === expectedSignature) {
+                    // Оплата подтверждена
+                    localStorage.setItem('etrn_payment_status', 'paid');
+                    localStorage.setItem('etrn_payment_date', new Date().toISOString());
+                    localStorage.setItem('etrn_payment_amount', outSum);
+                    
+                    // Активируем полный доступ
+                    sessionStorage.setItem('etrn_full_access', 'true');
+                    
+                    alert('Оплата успешно завершена! Доступ активирован.');
+                    window.location.href = 'app.html';
+                }
+            }
+            
+            // Проверяем pending payment из localStorage
+            const pendingPayment = localStorage.getItem('etrn_pending_payment');
+            if (pendingPayment && !invId) {
+                // Если оплата не завершена, показываем напоминание
+                console.log('Ожидание оплаты...');
+            }
+        }
+        
+        // Запускаем проверку
+        setTimeout(() => {
+            if (typeof CryptoJS !== 'undefined') {
+                checkPaymentResult();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

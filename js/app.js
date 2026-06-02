@@ -5,6 +5,7 @@ let currentCategory = 'shippers';
 let currentEditId = null;
 let dbSearchTerm = '';
 let compartments = []; // Массив для хранения отсеков
+// Получение текущего пользователя
 let currentUser = null;
 
 // DOM элементы
@@ -42,6 +43,8 @@ function loadCurrentUser() {
             console.error('Ошибка загрузки пользователя', e);
             window.location.href = 'index.html';
         }
+    } else {
+        window.location.href = 'index.html';
     }
 }
 
@@ -110,17 +113,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Установка даты по умолчанию
     const today = new Date().toISOString().split('T')[0];
-    const shipmentDateInput = document.getElementById('shipmentDate');
-    if (shipmentDateInput) shipmentDateInput.value = today;
+    document.getElementById('shipmentDate').value = today;
     
-    if (statusMsg) {
-        statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> База данных IndexedDB готова';
-        setTimeout(() => {
-            if (statusMsg.innerHTML.includes('готова')) {
-                statusMsg.innerHTML = '';
-            }
-        }, 2000);
-    }
+    statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> База данных IndexedDB готова';
+    setTimeout(() => {
+        if (statusMsg.innerHTML.includes('готова')) {
+            statusMsg.innerHTML = '';
+        }
+    }, 2000);
 });
 
 // Кнопка возврата на главную
@@ -561,7 +561,7 @@ function generateGuid() {
     }).toUpperCase();
 }
 
-// Генерация имени файла по формату ФНС
+// Генерация имени файла по формату ФНС (Приказ № ЕД-7-26/383@)
 function generateFileName() {
     const now = new Date();
     const day = now.getDate().toString().padStart(2, '0');
@@ -601,10 +601,14 @@ function generateXML() {
         
         // Собираем данные по отсекам
         const compartmentsData = [];
+        let totalWeight = 0;
+        let totalPlaces = 0;
         
         for (const comp of compartments) {
             const weight = parseFloat(comp.weight) || 0;
             const places = parseInt(comp.places) || 1;
+            totalWeight += weight;
+            totalPlaces += places;
             
             compartmentsData.push({
                 productName: comp.product ? comp.product.name : 'Нефть сырая',
@@ -625,10 +629,11 @@ function generateXML() {
         const nowDate = new Date().toISOString().slice(0, 10);
         const idGuid = generateGuid();
         
-        // Генерация XML по формату ФНС
+        // Генерация XML по формату ФНС (Приказ № ЕД-7-26/383@)
         let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
         xml += `<ON_TRNVPRGO xmlns="http://www.nalog.ru/EDO/TTN/TransportationCustomer/033/..." xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ИдОтпр="${idGuid}" ВерсПрог="5.03">\n`;
         xml += `    <КНД>1110430</КНД>\n`;
+        xml += `    <НаимТрН>3</НаимТрН>\n`;
         xml += `    <ДатаСостав>${nowDate}</ДатаСостав>\n`;
         xml += `    <НомерТТН>${escapeXml(ttnNumber)}</НомерТТН>\n`;
         xml += `    <СвГрузоотпр>\n`;
@@ -643,12 +648,15 @@ function generateXML() {
         xml += `        <КПП>${escapeXml(consignee.kpp || '')}</КПП>\n`;
         xml += `        <НазваниеОрг>${escapeXml(consignee.name)}</НазваниеОрг>\n`;
         xml += `        <Адрес>${escapeXml(consignee.address || '')}</Адрес>\n`;
+        xml += `        <Тлф>${escapeXml(consignee.phone || '')}</Тлф>\n`;
         xml += `    </СвГрузополуч>\n`;
         xml += `    <СвПеревозч>\n`;
         xml += `        <ИНН>${escapeXml(carrier.inn || '')}</ИНН>\n`;
         xml += `        <КПП>${escapeXml(carrier.kpp || '')}</КПП>\n`;
         xml += `        <НазваниеОрг>${escapeXml(carrier.name)}</НазваниеОрг>\n`;
         xml += `        <ВидТранс>${escapeXml(carrier.transportType || 'Автомобильный')}</ВидТранс>\n`;
+        xml += `        <Адрес>${escapeXml(carrier.address || '')}</Адрес>\n`;
+        xml += `        <Тлф>${escapeXml(carrier.phone || '')}</Тлф>\n`;
         xml += `    </СвПеревозч>\n`;
         xml += `    <ТранспСр>\n`;
         xml += `        <РегНомерТС>${escapeXml(vehicle.regNumber || '')}</РегНомерТС>\n`;
@@ -656,6 +664,7 @@ function generateXML() {
         xml += `        <СведВод>\n`;
         xml += `            <ФИОВод>${escapeXml(driver.fullName || '')}</ФИОВод>\n`;
         xml += `            <НомВодУдост>${escapeXml(driver.license || '')}</НомВодУдост>\n`;
+        xml += `            <ТлфВод>${escapeXml(driver.phone || '')}</ТлфВод>\n`;
         xml += `        </СведВод>\n`;
         xml += `    </ТранспСр>\n`;
         xml += `    <СведПер>\n`;
@@ -697,7 +706,7 @@ function generateXML() {
         xml += `</ON_TRNVPRGO>`;
         
         if (xmlPreview) xmlPreview.innerText = xml;
-        if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> XML успешно сформирован по формату ФНС';
+        if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> XML успешно сформирован по формату ФНС (Приказ № ЕД-7-26/383@)';
         return xml;
     } catch(e) {
         if (statusMsg) statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка: ${e.message}`;
@@ -731,7 +740,7 @@ function downloadXML() {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-download"></i> Файл скачан';
+        if (statusMsg) statusMsg.innerHTML = '<i class="fas fa-download"></i> Файл скачан в формате ФНС';
     }
 }
 
@@ -747,6 +756,7 @@ function copyXML() {
 
 // Modal handlers for adding entities
 function openAddModal() {
+    currentEditId = null;
     if (modalTitle) modalTitle.innerText = `Добавить запись в категорию: ${getCategoryNameRu(currentCategory)}`;
     
     let fieldsHtml = '';
@@ -1025,3 +1035,4 @@ function attachEventListeners() {
 // Делаем функции глобальными для доступа из HTML
 window.addCompartment = addCompartment;
 window.removeCompartment = removeCompartment;
+

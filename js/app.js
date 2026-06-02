@@ -9,7 +9,6 @@ let compartments = []; // Массив для хранения отсеков
 let currentUser = null;
 
 // Получение текущего пользователя из sessionStorage
-// Получение текущего пользователя из sessionStorage
 function loadCurrentUser() {
     const userData = sessionStorage.getItem('etrn_user');
     if (userData) {
@@ -113,11 +112,6 @@ function showDemoLimits() {
     }
 }
 
-// Вызываем при загрузке
-document.addEventListener('DOMContentLoaded', async () => {
-    loadCurrentUser();
-    // ... остальной код инициализации
-});
 // DOM элементы
 const generateBtn = document.getElementById('generateBtn');
 const downloadBtn = document.getElementById('downloadBtn');
@@ -139,6 +133,7 @@ const selectedItems = {};
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', async () => {
+    loadCurrentUser();
     statusMsg.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Загрузка базы данных...';
     
     await initDatabase();
@@ -160,11 +155,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 2000);
 });
 
-// Инициализация отсеков
-function initCompartments() {
-    // Добавляем один отсек по умолчанию
-    addCompartment();
-}
 // Кнопка возврата на главную
 const backBtn = document.getElementById('backToLandingBtn');
 if (backBtn) {
@@ -172,6 +162,12 @@ if (backBtn) {
         window.location.href = 'index.html';
     });
 }
+
+// Инициализация отсеков
+function initCompartments() {
+    addCompartment();
+}
+
 // Добавление нового отсека
 function addCompartment() {
     const container = document.getElementById('compartmentsContainer');
@@ -230,7 +226,6 @@ function addCompartment() {
     
     container.appendChild(compartmentDiv);
     
-    // Сохраняем данные отсека
     compartments.push({
         id: compartmentId,
         product: null,
@@ -242,10 +237,7 @@ function addCompartment() {
         marking: 'Отсутствует'
     });
     
-    // Настраиваем поиск продукта для этого отсека
     setupProductSearchForCompartment(compartmentId);
-    
-    // Обновляем заголовки отсеков
     updateCompartmentTitles();
 }
 
@@ -282,14 +274,12 @@ async function setupProductSearchForCompartment(compartmentId) {
             const product = JSON.parse(matchedOption.getAttribute('data-json'));
             compartment.product = product;
             
-            // Заполняем ТН ВЭД
             const tnvedInput = document.getElementById(`tnvedCode_${compartmentId}`);
             if (tnvedInput && product.defaultTnved) {
                 tnvedInput.value = product.defaultTnved;
                 compartment.tnved = product.defaultTnved;
             }
             
-            // Заполняем плотность по умолчанию
             const densityInput = document.getElementById(`density_${compartmentId}`);
             if (densityInput && product.densityDefault) {
                 densityInput.value = product.densityDefault;
@@ -303,7 +293,6 @@ async function setupProductSearchForCompartment(compartmentId) {
         }
     };
     
-    // Сохраняем изменения при вводе
     const weightInput = document.getElementById(`weight_${compartmentId}`);
     if (weightInput) {
         weightInput.oninput = function() {
@@ -627,7 +616,20 @@ function generateGuid() {
     }).toUpperCase();
 }
 
-// Генерация XML по новому образцу (исправленная кодировка)
+// Генерация имени файла по формату ФНС
+function generateFileName() {
+    const now = new Date();
+    const day = now.getDate().toString().padStart(2, '0');
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const year = now.getFullYear();
+    const dateStr = `${day}${month}${year}`;
+    const guid1 = generateGuid();
+    const guid2 = generateGuid();
+    const guid3 = generateGuid();
+    return `ON_TRNVPRGO_${guid1}_${guid2}_0_${dateStr}_${guid3}`;
+}
+
+// Генерация XML по новому формату ФНС (Приказ № ЕД-7-26/383@ от 14.05.2024)
 function generateXML() {
     try {
         const shipper = getSelectedFromSearch('shippers');
@@ -638,22 +640,9 @@ function generateXML() {
         const vehicle = getSelectedFromSearch('vehicles');
         
         // Получаем основные данные формы
-        const ttnNumber = document.getElementById('ttnNumber').value.trim() || `21323`;
-        const contractNumber = document.getElementById('contractNumber').value.trim() || 'Без номера';
-        const contractDate = document.getElementById('contractDate').value;
+        const ttnNumber = document.getElementById('ttnNumber').value.trim() || `ТТН-${Date.now()}`;
         const shipmentDate = document.getElementById('shipmentDate').value;
-        const arrivalTime = document.getElementById('arrivalTime').value || getCurrentTime();
-        const departureTime = document.getElementById('departureTime').value || getCurrentTime();
-        const addressIndex = document.getElementById('addressIndex').value || '109472';
-        const addressRegion = document.getElementById('addressRegion').value || '77';
-        const addressStreet = document.getElementById('addressStreet').value || 'ВОЛГОГРАДСКИЙ ПР-КТ';
-        const addressHouse = document.getElementById('addressHouse').value || '164';
-        const addressBuilding = document.getElementById('addressBuilding').value || 'К3';
-        const deliveryAddressIndex = document.getElementById('deliveryAddressIndex').value || '420111';
-        const deliveryAddressRegion = document.getElementById('deliveryAddressRegion').value || '03';
-        const loadMethod = document.getElementById('loadMethod').value || '01';
-        const cargoCondition = document.getElementById('cargoCondition').value || 'Без нареканий';
-        const cargoValue = document.getElementById('cargoValue').value || '0';
+        const shipPoint = document.getElementById('shipmentPoint').value || "Резервуарный парк";
         
         // Проверка обязательных полей
         if (!shipper.name) throw new Error("Выберите грузоотправителя");
@@ -689,134 +678,89 @@ function generateXML() {
         
         // Форматирование дат
         const formattedShipmentDate = formatDateForXML(shipmentDate);
-        const formattedContractDate = contractDate ? formatDateForXML(contractDate) : '';
-        const nowDate = new Date().toISOString().slice(0, 10).split('-').reverse().join('.');
-        const nowTime = getCurrentTime();
+        const nowDate = new Date().toISOString().slice(0, 10);
+        const idGuid = generateGuid();
         
-        // Генерация ID файла
-        const fileId = `ON_TRNACLGROT_${generateGuid()}_${generateGuid()}_0_${nowDate.replace(/\./g, '')}_${generateGuid()}`;
-        
-        // Построение XML - ИСПРАВЛЕННАЯ ВЕРСИЯ без русских букв в тегах
+        // Генерация XML по формату ФНС (Приказ № ЕД-7-26/383@)
         let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-        xml += `<File IdFile="${escapeXml(fileId)}" VersProg="ЭТРН.ONLINE V 1.01" VersForm="5.01">\n`;
-        xml += `    <Document KND="1110339" PoFactXJ="Транспортная накладная, информация грузоотправителя" DatInfoGO="${nowDate}" VrInfoGO="${nowTime}">\n`;
-        xml += `        <SodInfoGO SodOper="Лицом, осуществляющим погрузку груза, при указанных обстоятельствах передан водителю груз с указанными характеристиками" NomberTrN="${escapeXml(ttnNumber)}" DataTrN="${formattedShipmentDate}" NomZak="${escapeXml(contractNumber)}" DataZak="${formattedContractDate}">\n`;
-        xml += `            <SvGO GOExp="0">\n`;
-        xml += `                <RekIdentGO>\n`;
-        xml += `                    <IdSv>\n`;
-        xml += `                        <SvYLUch NamOrg="${escapeXml(shipper.name)}" INNYL="${escapeXml(shipper.inn || '')}" KPP="${escapeXml(shipper.kpp || '')}" />\n`;
-        xml += `                    </IdSv>\n`;
-        xml += `                    <Address>\n`;
-        xml += `                        <AdrRF Index="${escapeXml(addressIndex)}" CodeRegion="${escapeXml(addressRegion)}" />\n`;
-        xml += `                    </Address>\n`;
-        xml += `                    <Contact>\n`;
-        xml += `                        <Tlf>${escapeXml(shipper.phone || '')}</Tlf>\n`;
-        xml += `                    </Contact>\n`;
-        xml += `                </RekIdentGO>\n`;
-        xml += `            </SvGO>\n`;
-        xml += `            <SvGP>\n`;
-        xml += `                <RekIdentGP>\n`;
-        xml += `                    <IdSv>\n`;
-        xml += `                        <SvYLUch NamOrg="${escapeXml(consignee.name)}" INNYL="${escapeXml(consignee.inn || '')}" KPP="${escapeXml(consignee.kpp || '')}" />\n`;
-        xml += `                    </IdSv>\n`;
-        xml += `                    <Contact>\n`;
-        xml += `                        <Tlf>${escapeXml(consignee.phone || '')}</Tlf>\n`;
-        xml += `                    </Contact>\n`;
-        xml += `                </RekIdentGP>\n`;
-        xml += `                <AddressDostGr>\n`;
-        xml += `                    <AddressRF Index="${escapeXml(deliveryAddressIndex)}" CodeRegion="${escapeXml(deliveryAddressRegion)}" />\n`;
-        xml += `                </AddressDostGr>\n`;
-        xml += `            </SvGP>\n`;
+        xml += `<ON_TRNVPRGO xmlns="http://www.nalog.ru/EDO/TTN/TransportationCustomer/033/..." xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ИдОтпр="${idGuid}" ВерсПрог="5.03">\n`;
+        xml += `    <КНД>1110430</КНД>\n`;
+        xml += `    <ДатаСостав>${nowDate}</ДатаСостав>\n`;
+        xml += `    <НомерТТН>${escapeXml(ttnNumber)}</НомерТТН>\n`;
+        xml += `    <СвГрузоотпр>\n`;
+        xml += `        <ИНН>${escapeXml(shipper.inn || '')}</ИНН>\n`;
+        xml += `        <КПП>${escapeXml(shipper.kpp || '')}</КПП>\n`;
+        xml += `        <НазваниеОрг>${escapeXml(shipper.name)}</НазваниеОрг>\n`;
+        xml += `        <Адрес>${escapeXml(shipper.address || '')}</Адрес>\n`;
+        xml += `        <Тлф>${escapeXml(shipper.phone || '')}</Тлф>\n`;
+        xml += `    </СвГрузоотпр>\n`;
+        xml += `    <СвГрузополуч>\n`;
+        xml += `        <ИНН>${escapeXml(consignee.inn || '')}</ИНН>\n`;
+        xml += `        <КПП>${escapeXml(consignee.kpp || '')}</КПП>\n`;
+        xml += `        <НазваниеОрг>${escapeXml(consignee.name)}</НазваниеОрг>\n`;
+        xml += `        <Адрес>${escapeXml(consignee.address || '')}</Адрес>\n`;
+        xml += `    </СвГрузополуч>\n`;
+        xml += `    <СвПеревозч>\n`;
+        xml += `        <ИНН>${escapeXml(carrier.inn || '')}</ИНН>\n`;
+        xml += `        <КПП>${escapeXml(carrier.kpp || '')}</КПП>\n`;
+        xml += `        <НазваниеОрг>${escapeXml(carrier.name)}</НазваниеОрг>\n`;
+        xml += `        <ВидТранс>${escapeXml(carrier.transportType || 'Автомобильный')}</ВидТранс>\n`;
+        xml += `    </СвПеревозч>\n`;
+        xml += `    <ТранспСр>\n`;
+        xml += `        <РегНомерТС>${escapeXml(vehicle.regNumber || '')}</РегНомерТС>\n`;
+        xml += `        <НацТС>${escapeXml(vehicle.nationality || 'RUS')}</НацТС>\n`;
+        xml += `        <СведВод>\n`;
+        xml += `            <ФИОВод>${escapeXml(driver.fullName || '')}</ФИОВод>\n`;
+        xml += `            <НомВодУдост>${escapeXml(driver.license || '')}</НомВодУдост>\n`;
+        xml += `        </СведВод>\n`;
+        xml += `    </ТранспСр>\n`;
+        xml += `    <СведПер>\n`;
+        xml += `        <НаимПунктОтпр>${escapeXml(shipPoint)}</НаимПунктОтпр>\n`;
+        xml += `        <ДатаОтгр>${formattedShipmentDate}</ДатаОтгр>\n`;
+        xml += `    </СведПер>\n`;
+        xml += `    <ТовРаздел>\n`;
         
-        // Добавляем информацию по каждому отсеку
         for (let i = 0; i < compartmentsData.length; i++) {
             const cargo = compartmentsData[i];
-            xml += `            <SvGruz>\n`;
-            xml += `                <OpGruz NamGruz="${escapeXml(cargo.productName)}" SostGruz="${escapeXml(cargoCondition)}" SpUpak="0" VidTar="1D" KolMestGr="${cargo.places}">\n`;
-            xml += `                    <Mark>${escapeXml(cargo.marking)}</Mark>\n`;
-            xml += `                    <PlMasGruz MasBrutZnach="${cargo.weight}" />\n`;
-            xml += `                    <CennGruz StCennGr="${escapeXml(cargoValue)}" CodeOKV="643" NamOKV="Российский рубль" />\n`;
-            xml += `                </OpGruz>\n`;
-            xml += `                <ObCennGr StCennGr="${escapeXml(cargoValue)}" CodeOKV="643" NamOKV="Российский рубль" />\n`;
-            
-            // Добавляем физико-химические показатели
-            if (cargo.density || cargo.temp) {
-                xml += `                <FizHimPok>\n`;
-                xml += `                    <Pokaz><NamPokaz>Плотность при 15°C</NamPokaz><ZnachPokaz>${cargo.density}</ZnachPokaz><EdPokaz>кг/м³</EdPokaz></Pokaz>\n`;
-                xml += `                    <Pokaz><NamPokaz>Температура налива</NamPokaz><ZnachPokaz>${cargo.temp}</ZnachPokaz><EdPokaz>°C</EdPokaz></Pokaz>\n`;
-                xml += `                </FizHimPok>\n`;
-            }
-            
-            xml += `            </SvGruz>\n`;
+            xml += `        <Товар>\n`;
+            xml += `            <НаимТов>${escapeXml(cargo.productName)}</НаимТов>\n`;
+            xml += `            <КодТовТНВЭД>${escapeXml(cargo.tnved)}</КодТовТНВЭД>\n`;
+            xml += `            <КолТов>\n`;
+            xml += `                <КолТовФакт>${cargo.weight}</КолТовФакт>\n`;
+            xml += `                <ОКЕИ>168</ОКЕИ>\n`;
+            xml += `            </КолТов>\n`;
+            xml += `            <ФизХимПок>\n`;
+            xml += `                <Показ>\n`;
+            xml += `                    <НаимПоказ>Плотность при 15°C</НаимПоказ>\n`;
+            xml += `                    <ЗначПоказ>${cargo.density}</ЗначПоказ>\n`;
+            xml += `                    <ЕдПоказ>кг/м³</ЕдПоказ>\n`;
+            xml += `                </Показ>\n`;
+            xml += `                <Показ>\n`;
+            xml += `                    <НаимПоказ>Температура налива</НаимПоказ>\n`;
+            xml += `                    <ЗначПоказ>${cargo.temp}</ЗначПоказ>\n`;
+            xml += `                    <ЕдПоказ>°C</ЕдПоказ>\n`;
+            xml += `                </Показ>\n`;
+            xml += `            </ФизХимПок>\n`;
+            xml += `            <КолГрузМест>${cargo.places}</КолГрузМест>\n`;
+            xml += `        </Товар>\n`;
         }
         
-        xml += `            <UkazGO UkNormPrvz="Отсутствуют">\n`;
-        xml += `                <SvPA LicoPA="Грузоотправитель" SposPerUkPA="Электронное уведомление перевозчика о переадресовке">\n`;
-        xml += `                    <KontPA>\n`;
-        xml += `                        <Tlf>${escapeXml(shipper.phone || '')}</Tlf>\n`;
-        xml += `                    </KontPA>\n`;
-        xml += `                </SvPA>\n`;
-        xml += `            </UkazGO>\n`;
-        xml += `            <SvPer>\n`;
-        xml += `                <IdSv>\n`;
-        xml += `                    <SvYLUch NamOrg="${escapeXml(carrier.name)}" INNYL="${escapeXml(carrier.inn || '')}" KPP="${escapeXml(carrier.kpp || '')}" />\n`;
-        xml += `                </IdSv>\n`;
-        xml += `                <Address>\n`;
-        xml += `                    <AdrRF Index="${escapeXml(addressIndex)}" CodeRegion="${escapeXml(addressRegion)}" />\n`;
-        xml += `                </Address>\n`;
-        xml += `                <Contact>\n`;
-        xml += `                    <Tlf>${escapeXml(carrier.phone || '')}</Tlf>\n`;
-        xml += `                </Contact>\n`;
-        xml += `            </SvPer>\n`;
-        xml += `            <SvVodit INNFL="${escapeXml(driver.inn || '')}">\n`;
-        xml += `                <Tlf>${escapeXml(driver.phone || '')}</Tlf>\n`;
+        xml += `    </ТовРаздел>\n`;
+        xml += `    <Подписант>\n`;
+        xml += `        <ФИО>${escapeXml(signer.fio || '')}</ФИО>\n`;
+        xml += `        <Должность>${escapeXml(signer.position || '')}</Должность>\n`;
+        xml += `    </Подписант>\n`;
+        xml += `</ON_TRNVPRGO>`;
         
-        // Разбиваем ФИО водителя
-        const driverNameParts = (driver.fullName || '').split(' ');
-        const driverLastName = driverNameParts[0] || '';
-        const driverFirstName = driverNameParts[1] || '';
-        
-        xml += `                <FIO Familiya="${escapeXml(driverLastName)}" Imya="${escapeXml(driverFirstName)}" />\n`;
-        xml += `            </SvVodit>\n`;
-        xml += `            <SvTS>\n`;
-        xml += `                <TS RegNumber="${escapeXml(vehicle.regNumber || '')}" TipVlad="1">\n`;
-        xml += `                    <ParTS Tip="${escapeXml(vehicle.brand || '')}" Marka="${escapeXml(vehicle.brand || '')}" Gruzopod="${escapeXml(vehicle.loadCapacity || '0')}" Vmestim="${escapeXml(vehicle.capacity || '0')}" />\n`;
-        xml += `                </TS>\n`;
-        xml += `            </SvTS>\n`;
-        xml += `            <SvPogruz ZayavPogr="${shipmentDate}T${arrivalTime}+03:00" NalKoorTochVrZayav="0" FDatVrPrib="${shipmentDate}T${arrivalTime}+03:00" NalKoorTochVrFPogr="0" FDatVrUbyt="${shipmentDate}T${departureTime}+03:00" NalKoorTochVrFUbyt="0" MasBrutOtrg="${totalWeight.toFixed(3)}" MetOpMass="${escapeXml(loadMethod)}" KolMestPriem="${totalPlaces}">\n`;
-        xml += `                <FAdresPogr>\n`;
-        xml += `                    <AddressRF Index="${escapeXml(addressIndex)}" CodeRegion="${escapeXml(addressRegion)}" Ulitsa="${escapeXml(addressStreet)}" Dom="${escapeXml(addressHouse)}" Korpus="${escapeXml(addressBuilding)}" />\n`;
-        xml += `                </FAdresPogr>\n`;
-        xml += `                <SvLicPogrGr SovpGOP="1">\n`;
-        xml += `                    <IdentRekGO>\n`;
-        xml += `                        <INNYL>${escapeXml(shipper.inn || '')}</INNYL>\n`;
-        xml += `                    </IdentRekGO>\n`;
-        xml += `                </SvLicPogrGr>\n`;
-        xml += `                <VladInfra SovpGOV="3" ObNetInfOVlad="Нет данных" />\n`;
-        xml += `            </SvPogruz>\n`;
-        xml += `        </SodInfoGO>\n`;
-        xml += `        <Podpisant StatPod="1">\n`;
-        
-        // Разбиваем ФИО подписанта
-        const signerNameParts = (signer.fio || '').split(' ');
-        const signerLastName = signerNameParts[0] || '';
-        const signerFirstName = signerNameParts[1] || '';
-        const signerPatronymic = signerNameParts[2] || '';
-        
-        xml += `            <FIO Familiya="${escapeXml(signerLastName)}" Imya="${escapeXml(signerFirstName)}" Otchestvo="${escapeXml(signerPatronymic)}" />\n`;
-        xml += `        </Podpisant>\n`;
-        xml += `    </Document>\n`;
-        xml += `</File>`;
-        
-        // Отображаем XML в preview
         xmlPreview.innerText = xml;
-        statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> XML успешно сформирован по новому формату (UTF-8)';
+        statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> XML успешно сформирован по формату ФНС (Приказ № ЕД-7-26/383@)';
         return xml;
     } catch(e) {
         statusMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Ошибка: ${e.message}`;
         return null;
     }
 }
+
 function escapeXml(str) {
     if (!str) return '';
     return str.replace(/[<>&'"]/g, function(m) {
@@ -832,17 +776,17 @@ function escapeXml(str) {
 function downloadXML() {
     const xml = generateXML();
     if (xml) {
-        // Используем UTF-8 с BOM для корректного отображения в Windows
+        const fileName = generateFileName();
         const blob = new Blob(["\uFEFF" + xml], {type: 'application/xml;charset=UTF-8'});
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.href = url;
-        link.download = `ON_TRNACLGROT_${document.getElementById('ttnNumber').value || 'document'}.xml`;
+        link.download = `${fileName}.xml`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        statusMsg.innerHTML = '<i class="fas fa-download"></i> Файл скачан (UTF-8 с BOM)';
+        statusMsg.innerHTML = '<i class="fas fa-download"></i> Файл скачан в формате ФНС';
     }
 }
 
@@ -1128,11 +1072,6 @@ function attachEventListeners() {
             await renderDatabasePanel();
         });
     });
-    
-    // Автоматический расчет объема (опционально)
-    const calculateVolume = () => {
-        // Можно добавить автоматический расчет при необходимости
-    };
 }
 
 // Делаем функции глобальными для доступа из HTML

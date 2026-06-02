@@ -5,7 +5,6 @@ let currentCategory = 'shippers';
 let currentEditId = null;
 let dbSearchTerm = '';
 let compartments = []; // Массив для хранения отсеков
-// Получение текущего пользователя
 let currentUser = null;
 
 // DOM элементы
@@ -113,14 +112,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Установка даты по умолчанию
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('shipmentDate').value = today;
+    const shipmentDateInput = document.getElementById('shipmentDate');
+    if (shipmentDateInput) shipmentDateInput.value = today;
     
-    statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> База данных IndexedDB готова';
-    setTimeout(() => {
-        if (statusMsg.innerHTML.includes('готова')) {
-            statusMsg.innerHTML = '';
-        }
-    }, 2000);
+    if (statusMsg) {
+        statusMsg.innerHTML = '<i class="fas fa-check-circle"></i> База данных IndexedDB готова';
+        setTimeout(() => {
+            if (statusMsg.innerHTML.includes('готова')) {
+                statusMsg.innerHTML = '';
+            }
+        }, 2000);
+    }
 });
 
 // Кнопка возврата на главную
@@ -322,7 +324,7 @@ function updateCompartmentTitles() {
 
 // Создание input полей с поиском
 function createSearchInputs() {
-    const categories = ['shippers', 'consignees', 'carriers', 'drivers', 'signers', 'vehicles'];
+    const categories = ['shippers', 'consignees', 'carriers', 'drivers', 'signers', 'vehicles', 'products'];
     
     categories.forEach(category => {
         const container = document.getElementById(`${category}Container`);
@@ -343,7 +345,7 @@ function createSearchInputs() {
 
 // Заполнение всех выпадающих списков
 async function populateAllSelects() {
-    const categories = ['shippers', 'consignees', 'carriers', 'drivers', 'signers', 'vehicles'];
+    const categories = ['shippers', 'consignees', 'carriers', 'drivers', 'signers', 'vehicles', 'products'];
     
     for (const category of categories) {
         const items = await getCategory(category);
@@ -365,6 +367,7 @@ async function populateAllSelects() {
                 case 'drivers': displayText = `${item.fullName} / ${item.license}`; break;
                 case 'signers': displayText = `${item.fio} (${item.position})`; break;
                 case 'vehicles': displayText = `${item.regNumber}`; break;
+                case 'products': displayText = `${item.name}`; break;
             }
             option.value = displayText;
             option.setAttribute('data-json', JSON.stringify(item));
@@ -509,6 +512,7 @@ function getItemDisplay(category, item) {
         case 'drivers': return item.fullName;
         case 'signers': return item.fio;
         case 'vehicles': return item.regNumber;
+        case 'products': return item.name;
         default: return '';
     }
 }
@@ -521,6 +525,7 @@ function getItemDetails(category, item) {
         case 'drivers': return `уд. ${item.license || ''}`;
         case 'signers': return item.position || '';
         case 'vehicles': return item.nationality || '';
+        case 'products': return `ТН ВЭД: ${item.defaultTnved || ''}`;
         default: return '';
     }
 }
@@ -536,6 +541,7 @@ function quickFillByCategory(category, data) {
         case 'drivers': displayText = `${data.fullName} / ${data.license}`; break;
         case 'signers': displayText = `${data.fio} (${data.position})`; break;
         case 'vehicles': displayText = `${data.regNumber}`; break;
+        case 'products': displayText = `${data.name}`; break;
     }
     
     inputs[category].value = displayText;
@@ -561,20 +567,7 @@ function generateGuid() {
     }).toUpperCase();
 }
 
-// Генерация имени файла по формату ФНС (Приказ № ЕД-7-26/383@)
-function generateFileName() {
-    const now = new Date();
-    const day = now.getDate().toString().padStart(2, '0');
-    const month = (now.getMonth() + 1).toString().padStart(2, '0');
-    const year = now.getFullYear();
-    const dateStr = `${day}${month}${year}`;
-    const guid1 = generateGuid();
-    const guid2 = generateGuid();
-    const guid3 = generateGuid();
-    return `ON_TRNVPRGO_${guid1}_${guid2}_0_${dateStr}_${guid3}`;
-}
-
-// Генерация XML по формату ФНС (Приказ № ЕД-7-26/383@) - точное соответствие образцу
+// Генерация XML по формату ФНС (Приказ № ЕД-7-26/383@)
 function generateXML() {
     try {
         const shipper = getSelectedFromSearch('shippers');
@@ -890,7 +883,9 @@ function escapeXml(str) {
 function downloadXML() {
     const xml = generateXML();
     if (xml) {
-        const fileName = generateFileName();
+        const now = new Date();
+        const dateForFile = `${now.getDate().toString().padStart(2, '0')}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getFullYear()}`;
+        const fileName = `ON_TRNVPRGO_${generateGuid()}_${generateGuid()}_0_${dateForFile}_${generateGuid()}`;
         const blob = new Blob(["\uFEFF" + xml], {type: 'application/xml;charset=UTF-8'});
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
@@ -1195,4 +1190,3 @@ function attachEventListeners() {
 // Делаем функции глобальными для доступа из HTML
 window.addCompartment = addCompartment;
 window.removeCompartment = removeCompartment;
-
